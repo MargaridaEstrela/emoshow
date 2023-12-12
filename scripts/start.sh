@@ -28,3 +28,4 @@ sudo /usr/bin/python driver_leds.py &
 /usr/bin/python behaviour_look_around.py &
 /usr/bin/python behaviour_change_mode.py &
 
+/usr/bin/python driver_camera.py

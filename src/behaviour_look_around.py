@@ -12,6 +12,7 @@ While enabled, the behaviour makes the head look around, randomly.
 import time
 import random
 import middleware as mw
+import cv2
 
 
 MAX_RANGE = 30.0
@@ -30,7 +31,18 @@ class BehaviourLookAround:
         self.behaviours = mw.Behaviours()
         self.pan = mw.Pan()
         self.tilt = mw.Tilt()
+
+        # Load pre-trained face detection classifier from OpenCV
+        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
+    def detect_faces(self, frame):
+        """
+        Detect faces in a given frame using OpenCV.
+        """
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        return faces
+
     def run(self):
         """
         Main loop.
@@ -69,11 +81,27 @@ class BehaviourLookAround:
                     tilt_angle = random.uniform(current_tilt - MAX_RANGE, current_tilt + MAX_RANGE)
                     tilt_angle = max(self.tilt.min_angle, min(self.tilt.max_angle, tilt_angle))
                     self.tilt.angle = tilt_angle
+
+                    # Capture video frame (you may need to adjust this part based on your camera setup)
+                    _, frame = video_capture.read()
+
+                    # Detect faces in the frame
+                    faces = self.detect_faces(frame)
+
+                    # Do something with the detected faces (e.g., print the number of faces)
+                    print(f"Number of faces: {len(faces)}")
+
                     time.sleep(random.uniform(MIN_SLEEP, MAX_SLEEP))
         finally:
             self.node.shutdown()
 
 
 if __name__ == '__main__':
+    # Initialize the video capture (you may need to adjust the index based on your camera setup)
+    video_capture = cv2.VideoCapture(0)
+
     behaviour = BehaviourLookAround()
     behaviour.run()
+
+    # Release the video capture when done
+    video_capture.release()
