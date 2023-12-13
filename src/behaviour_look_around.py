@@ -33,7 +33,7 @@ class BehaviourLookAround:
         self.tilt = mw.Tilt()
 
         # Load pre-trained face detection classifier from OpenCV
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        # self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
     def detect_faces(self, frame):
         """

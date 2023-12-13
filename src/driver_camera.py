@@ -13,7 +13,7 @@ Server the frames as a MJPEG stream.
 
 
 from flask import Flask, Response
-from deepface import DeepFace
+#from deepface import DeepFace
 import middleware as mw
 
 import libcamera
@@ -47,9 +47,9 @@ class DriverCamera:
 
     # Analyse a specific frame with the given path
     def frame_analysis(self, frame):
-        face_analysis = DeepFace.analyze(img_path = None, img = frame)
+        #face_analysis = DeepFace.analyze(img_path = None, img = frame)
         print(face_analysis["emotion"])
-        return face_analysis
+        return {}
 
 @app.route('/video')
 def video():
