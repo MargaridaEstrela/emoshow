@@ -9,15 +9,19 @@ import requests
 import socket
 
 import middleware as mw
+import os
 
-HOST = "192.168.0.114"
-PORT = 1234
+myPan = mw.Pan()
+myTilt = mw.Tilt()
+myOnboard = mw.Onboard()
 
-# Instantiate the camera driver and behavior
-print("Starting driver camera")
-# camera_driver = DriverCamera()
-print("Starting look around")
-look_around_behavior = BehaviourLookAround()
+myPan.enable = True
+myTilt.enable = True
+
+print(os.getcwd())
+print("chaging image")
+myOnboard.image = "images/simon_images/angry.png"
+print("image was changed")
 
 #list with all the emotions we will ask
 emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
@@ -25,31 +29,6 @@ emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
 #dictionary with all the emotions possible to the respective accuracy
 accuracy_dict = {50: "/static/images/thinking.png", 80: "/static/images/normal.png", 95: "/static/images/love.png"}
 
-look_around_behavior.enabled = True
-look_around_behavior.pan.enable = True
-look_around_behavior.tilt.enable = True
-
-def followFaces(faces, frame):
-    """
-    Simple function that given the recognized faces, it will pick the first
-    """
-    
-    face = faces[-1]   # get the first face assuming that its one closest to hte left side
-    x, y, w, h = face
-    print("Following this face: ", face)
-
-    angleInc = 20
-
-    if x - 960 <  0: 
-        # means that the face is on the left of the screen and need to turn right
-        angle = look_around_behavior.pan.angle + angleInc if look_around_behavior.pan.angle + angleInc < 30 else 30
-        look_around_behavior.pan.angle = angle
-        print("going right: ", look_around_behavior.pan.angle)
-    if x - 960 > 0:
-        # means that the face is on the right of the screen and need to turn left
-        angle = look_around_behavior.pan.angle - angleInc if look_around_behavior.pan.angle - angleInc > -30 else -30
-        look_around_behavior.pan.angle = angle
-        print("going left: ", look_around_behavior.pan.angle)
 
 
 def parseMessage(message):
@@ -65,25 +44,30 @@ def parseMessage(message):
     value = splitMessage[1]
 
     if (command == "pan"):
-       print("setting pan: ", mw.Pan.angle)
-       mw.Pan.angle = value
-       print("setting pan: ", mw.Pan.angle)
+       print("setting pan")
+       myPan.angle = int(value)
     elif (command == "tilt"):
         print("setting tilt")
-        mw.Tilt.angle = value
+        myTilt.angle = int(value)
     elif (command == "image"):
+        print("setting this image: ", value)
+        myOnboard.image = value        
         print("setting image")
+    elif (command == "getImage"):
+        # returns the path to the images
+        # get a list of all the images in the folder
+        images = [os.path.join("images/simon_images", x) for x in os.listdir("static/images/simon_images")]
+        return images
 
 
 print("Starting things")
-host = '192.168.0.103' #Server ip
+host = '192.168.0.102' #Server ip
 port = 4000
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.bind((host, port))
 
 
-print("Before: ", look_around_behavior.pan.angle)
 
 print("Server Started")
 while True:
@@ -92,11 +76,10 @@ while True:
     print("Message from: " + str(addr))
     print("From connected user: " + data)
 
-    parseMessage(data)
+    returnMsg = parseMessage(data)
 
-    data = data.upper()
     print("Sending: " + data)
-    s.sendto(data.encode('utf-8'), addr)
+    s.sendto(str(returnMsg).encode('utf-8'), addr)
 c.close()
 
 
@@ -144,4 +127,3 @@ while True:
 
     # look_around_behavior.pan.angle = -look_around_behavior.pan.angle
     print("Change player\n")
-
