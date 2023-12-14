@@ -1,11 +1,17 @@
 #! /usr/bin/env python
 
-from driver_camera import DriverCamera
+# from driver_camera import DriverCamera
 from behaviour_look_around import BehaviourLookAround
 import time
 import cv2
 import numpy as np
 import requests
+import socket
+
+import middleware as mw
+
+HOST = "192.168.0.114"
+PORT = 1234
 
 # Instantiate the camera driver and behavior
 print("Starting driver camera")
@@ -19,47 +25,9 @@ emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
 #dictionary with all the emotions possible to the respective accuracy
 accuracy_dict = {50: "/static/images/thinking.png", 80: "/static/images/normal.png", 95: "/static/images/love.png"}
 
-
+look_around_behavior.enabled = True
 look_around_behavior.pan.enable = True
-
-
-
-def grabImage(url="http://localhost:8080/stream.mjpg"):
-
-    # grab the image from the camera
-    response = requests.get(url, stream=True)
-
-    if response.status_code == 200:
-        # maens that it is a valid response
-        stream = response.iter_content(chunk_size=1024)
-        bytes_ = b''
-        for chunk in stream:
-            bytes_ += chunk
-            a = bytes_.find(b'\xff\xd8')
-            b = bytes_.find(b'\xff\xd9')
-            if a != -1 and b != -1:
-                jpg = bytes_[a:b+2]
-                bytes_ = bytes_[b+2:]
-                frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
-                break
-
-        return frame
-    return None
-
-def detect_faces(frame):
-    """
-    Detect faces in a given frame using OpenCV.
-    """
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-
-    #filter out faces smaller than x pixels by y pixels
-    faces = list(filter(lambda face: face[2] > 300 and face[3] > 300, faces))
-    
-    return faces
-
+look_around_behavior.tilt.enable = True
 
 def followFaces(faces, frame):
     """
@@ -84,7 +52,52 @@ def followFaces(faces, frame):
         print("going left: ", look_around_behavior.pan.angle)
 
 
+def parseMessage(message):
 
+    mw.Pan.enable = True
+    mw.Tilt.enable = True
+    splitMessage = message.split("::")
+
+    if len(splitMessage) != 2:
+        print("Invalid message")
+
+    command = splitMessage[0]
+    value = splitMessage[1]
+
+    if (command == "pan"):
+       print("setting pan: ", mw.Pan.angle)
+       mw.Pan.angle = value
+       print("setting pan: ", mw.Pan.angle)
+    elif (command == "tilt"):
+        print("setting tilt")
+        mw.Tilt.angle = value
+    elif (command == "image"):
+        print("setting image")
+
+
+print("Starting things")
+host = '192.168.0.103' #Server ip
+port = 4000
+
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.bind((host, port))
+
+
+print("Before: ", look_around_behavior.pan.angle)
+
+print("Server Started")
+while True:
+    data, addr = s.recvfrom(1024)
+    data = data.decode('utf-8')
+    print("Message from: " + str(addr))
+    print("From connected user: " + data)
+
+    parseMessage(data)
+
+    data = data.upper()
+    print("Sending: " + data)
+    s.sendto(data.encode('utf-8'), addr)
+c.close()
 
 
 counter = 0
