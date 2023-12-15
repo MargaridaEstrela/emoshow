@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-# from driver_camera import DriverCamera
 from behaviour_look_around import BehaviourLookAround
 import time
 import cv2
@@ -78,7 +77,12 @@ def parseMessage(message):
         print("[ICON] src: ", icon_src) 
 
     elif command == "game":
-        print("[GAME] starting...")
+        if value == "on":
+            print("[GAME] starting...")
+        elif value == "off":
+            print("[GAME] ending...")
+            s.close()
+            exit()
         
 
 if __name__=='__main__':
@@ -102,29 +106,3 @@ if __name__=='__main__':
 
         print("Sending: " + data)
         s.sendto(str(returnMsg).encode('utf-8'), addr)
-
-    c.close()
-
-
-    counter = 0
-
-    while True:
-        
-        frame = grabImage()
-        faces = detect_faces(frame)
-
-        if (len(faces) >= 1):
-            followFaces(faces, frame)
-
-            print(f"I have found {len(faces)} faces")
-
-            # cut the faces out of the image and save it locally
-            for i, (x, y, w, h) in enumerate(faces):
-                face = frame[y:y+h, x:x+w]
-                cv2.imwrite(f"{counter}_face_{i}.jpg", face)
-                counter += 1
-
-            # save the image with a rectangle on the faces
-            for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x,y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.imwrite(f"faces/{counter}_faces.jpg", frame)

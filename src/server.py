@@ -140,17 +140,27 @@ def setDefaultAngles():
     # set default pan
     pan_message = getAction("pan", default_pan)
     sendMessage(pan_message)
+
+    params["pan"] = default_pan
    
     # set default tilt
     tilt_message = getAction("tilt", default_tilt)
     sendMessage(tilt_message)
 
+    params["tilt"] = default_tilt
+
 
 def adjusParameters():
 
     while True:
-        command = input("Command: ")
+        try:
+            command = input("Command: ")
 
+        except KeyboardInterrupt:
+            print("\nCtrl+C detected. Exiting ...")
+            elmoSocket.close()
+            exit()
+            
         if command == 'game':
             print("All params set!")
             break
@@ -159,6 +169,7 @@ def adjusParameters():
             value = input("Value: ")
             param_message = getAction(command, value)
             sendMessage(param_message)
+            params[command] = int(value)
 
 
 def introduceGame():
@@ -227,14 +238,18 @@ def play_game():
         time.sleep(1)
 
         # change player
-        default_pan = - default_pan
-        pan_message = getAction("pan", default_pan)
+        params["pan"] = -params["pan"]
+        pan_message = getAction("pan", params["pan"])
         sendMessage(pan_message)
 
     # end game sound
     print("Ending game...")
     final_sound = getAction("sound", "end_game.mp3")
     sendMessage(final_sound)
+
+    # congrats the winer
+    winner_sound = getAction("sound", "winner.mp3")
+    sendMessage(winner_sound) 
 
 
 if __name__=='__main__':
@@ -244,12 +259,16 @@ if __name__=='__main__':
     clientIp = "192.168.0.114"
     server = (elmoIp, elmoPort)
 
-
     elmoSocket = connectElmo(elmoIp, elmoPort, clientIp)
     elmoSocket.settimeout(1) # not sure what this is doing
 
+    params = {"pan": 0, "tilt": 0}
+
     play_game()
 
-    #while True:
-        # loop()
-        # userLoop()
+    # send message to indicate the game is over
+    end_game_message = getAction("game", "off")
+    sendMessage(end_game_message)
+
+    # closing socket
+    elmoSocket.close()
