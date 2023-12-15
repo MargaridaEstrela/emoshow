@@ -1,3 +1,5 @@
+from deepface import DeepFace
+
 import time
 import socket
 import requests
@@ -5,6 +7,15 @@ import cv2
 import numpy as np
 
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+default_pan = 30
+default_tilt = 0
+
+#list with all the emotions we will ask
+emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
+
+#dictionary with all the emotions possible to the respective accuracy
+accuracy_dict = {50: "thinking", 80: "normal", 95: "love"}
 
 
 def detect_faces(frame):
@@ -14,15 +25,16 @@ def detect_faces(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
-
     #filter out faces smaller than x pixels by y pixels
     faces = list(filter(lambda face: face[2] > 300 and face[3] > 300, faces))
     
     return faces
 
-def grabImage(url="http://192.168.0.103:8080/stream.mjpg"):
 
-    # grab the image from the camera
+def grabImage(url="http://192.168.0.103:8080/stream.mjpg"):
+    """
+    Grab the image from the camera
+    """
     response = requests.get(url, stream=True)
 
     if response.status_code == 200:
@@ -43,15 +55,40 @@ def grabImage(url="http://192.168.0.103:8080/stream.mjpg"):
     return None
 
 
-def connectElmo(address="192.168.0.102", port="4000", client_ip="192.168.0.114"):
-    # this will start the socket used to communicate with elmo
+def connectElmo(elmo_ip="192.168.0.102", port=4000, client_ip="192.168.0.114"):
+    """
+    This will start the socket used to communicate with elmo
+    """
     elmoSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     elmoSocket.bind((client_ip,port))
 
     return elmoSocket
 
 
-def sendMessage(message, elmoSocket, server):
+def getAction():
+    """
+    This will request a command to the user
+    """
+    command = input("Comand: ")
+    value = input("Value: ")
+
+    action =f"{command}::{value}"
+    print("[REQUEST]: ", action)
+
+    return action
+
+
+def getAction(command, value):
+    """
+    This will return a request
+    """
+    action =f"{command}::{value}"
+    print("[REQUEST]: ", action)
+
+    return action
+
+
+def sendMessage(message):
     """
     This will send a message to elmo
     """
@@ -64,9 +101,7 @@ def sendMessage(message, elmoSocket, server):
 
 
 def showImage(image, faces):
-    """
-    This will show the image with the faces
-    """
+    # this will show the image with the faces
     for (x, y, w, h) in faces:
         cv2.rectangle(image, (x,y), (x+w, y+h), (255, 0, 0), 2)
     
@@ -76,6 +111,7 @@ def showImage(image, faces):
     key = cv2.waitKey(1)
     if key == ord('q'):
         exit()
+
 
 def loop():
     
@@ -88,23 +124,94 @@ def loop():
 
 def userLoop():
 
-    # angle = input("Enter angle: ")
-    # sendMessage("pan::" + str(angle), elmoSocket, (elmoIp, elmoPort))
-    data = sendMessage("getImage::off", elmoSocket, (elmoIp, elmoPort))
+    data = sendMessage("getImage::off")
     imageList = eval(data)
 
     counter = 0
     while True:
         print("sending this image: ", imageList[counter])
-        data = sendMessage(f"image::{imageList[counter]}", elmoSocket, (elmoIp, elmoPort))
+        data = sendMessage(f"image::{imageList[counter]}")
         counter +=1
         if counter > len(imageList)-1:
             counter = 0
         time.sleep(1)
 
 
+def takePictureSequence():
+    # show 3, 2, 1, picture
+    icon_3 = getAction("icon", "cal.png")
+    sendMessage(icon_3)
+    time.sleep(0.5)
+    icon_2 = getAction("icon", "music.png")
+    sendMessage(icon_2)
+    time.sleep(0.5)
+    icon_1 = getAction("icon", "cal.png")
+    sendMessage(icon_1)
+    time.sleep(0.5)
+    camera = getAction("icon", "elmo_idm.png")
+    sendMessage(camera)
 
 
+def play_game():
+
+    print("Starting game...")
+    
+    # set default pan
+    pan_message = getAction("pan", default_pan)
+    sendMessage(pan_message)
+   
+    # set default tilt
+    tilt_message = getAction("tilt", default_tilt)
+    sendMessage(tilt_message)
+
+    # introduce game
+    intro_message = getAction("sound", "intro.m4a")
+    sendMessage(intro_message)
+    time.sleep(0.5)
+    rules_message = getAction("sound", "rules.m4a")
+    sendMessage(rules_message)
+    time.sleep(0.5)
+    ready_message = getAction("sound", "ready.m4a")
+    sendMessage(ready_message)
+    time.sleep(0.5)
+
+    # start game
+    for emotion in emotions:
+        emotion_request = getAction("sound", f"{emotion}.m4a")
+        sendMessage(emotion_request)
+
+        # show 3, 2, 1, take a picture
+        takePictureSequence()
+        frame = grabImage()
+        face_analysis = DeepFace.analyze(frame)
+        
+        # show feedback
+        accuracy = face_analysis["emotion"][emotion]
+        if (accuracy < 80):
+            image = accuracy_dict[50]
+        elif (accuracy < 95):
+            image = accuracy_dict[80]
+        else:
+            image = accuracy_dict[95]
+
+        image_display = getAction("image", image)
+        sendMessage(image_display)
+
+        #play sound randomly
+        feedback_sound = getAction("sound", "correct.wav")
+        sendMessage(feedback_sound)
+
+        time.sleep(1)
+
+        # change player
+        default_pan = - default_pan
+        pan_message = getAction("pan", default_pan)
+        sendMessage(pan_message)
+
+    # end game sound
+    print("Ending game...")
+    final_sound = getAction("sound", "end_game.mp3")
+    sendMessage(final_sound)
 
 
 if __name__=='__main__':
@@ -112,24 +219,14 @@ if __name__=='__main__':
     elmoIp = "192.168.0.102"
     elmoPort = 4000
     clientIp = "192.168.0.114"
+    server = (elmoIp, elmoPort)
 
 
     elmoSocket = connectElmo(elmoIp, elmoPort, clientIp)
     elmoSocket.settimeout(1) # not sure what this is doing
 
+    play_game()
 
-    while True:
+    #while True:
         # loop()
-        userLoop()
-    # sendMessage("pan::0", elmoSocket, (elmoIp, elmoPort))
-    
-
-
-
-# action::value
-
-
-# pan::30
-# tilt::0
-
-# image::image.png
+        # userLoop()
