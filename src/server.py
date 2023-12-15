@@ -33,7 +33,7 @@ def detect_faces(frame):
     return faces
 
 
-def grabImage(url="http://192.168.0.103:8080/stream.mjpg"):
+def grabImage(url="http://192.168.0.101:8080/stream.mjpg"):
     """
     Grab the image from the camera
     """
@@ -57,7 +57,7 @@ def grabImage(url="http://192.168.0.103:8080/stream.mjpg"):
     return None
 
 
-def connectElmo(elmo_ip="192.168.0.102", port=4000, client_ip="192.168.0.114"):
+def connectElmo(elmo_ip="192.168.0.101", port=4000, client_ip="192.168.0.114"):
     """
     This will start the socket used to communicate with elmo
     """
@@ -175,56 +175,63 @@ def adjusParameters():
 
 
 def introduceGame():
-    intro_message = getAction("sound", "intro.m4a")
+    intro_message = getAction("sound", "intro.wav")
     sendMessage(intro_message)
-    time.sleep(0.5)
-    rules_message = getAction("sound", "rules.m4a")
+    time.sleep(6)
+    rules_message = getAction("sound", "rules.wav")
     sendMessage(rules_message)
-    time.sleep(0.5)
-    ready_message = getAction("sound", "ready.m4a")
+    time.sleep(6)
+    ready_message = getAction("sound", "ready.wav")
     sendMessage(ready_message)
-    time.sleep(0.5)
+    time.sleep(6)
 
 
 def takePictureSequence():
     # show 3, 2, 1, picture
-    icon_3 = getAction("icon", "cal.png")
+    icon_3 = getAction("icon", "call.png")
     sendMessage(icon_3)
-    time.sleep(0.5)
+    time.sleep(1)
     icon_2 = getAction("icon", "music.png")
     sendMessage(icon_2)
-    time.sleep(0.5)
-    icon_1 = getAction("icon", "cal.png")
+    time.sleep(1)
+    icon_1 = getAction("icon", "call.png")
     sendMessage(icon_1)
-    time.sleep(0.5)
+    time.sleep(1)
     camera = getAction("icon", "elmo_idm.png")
     sendMessage(camera)
 
 
 def play_game():
 
-    setDefaultAngles()
-    adjusParameters()
+
+    #adjusParameters()
 
     print("Starting game...")
 
     # introduce game
     introduceGame()
 
+    time.sleep(2)
+
+    setDefaultAngles()
+
     play = 1
 
     # start game
     for emotion in emotions:
-        emotion_request = getAction("sound", f"{emotion}.m4a")
+        emotion_request = getAction("sound", f"{emotion}.wav")
         sendMessage(emotion_request)
 
+        time.sleep(3)
+
         # show 3, 2, 1, take a picture
-        takePictureSequence()
-        frame = grabImage()
-        face_analysis = DeepFace.analyze(frame)
+        #takePictureSequence()
+        #frame = grabImage()
+        #face_analysis = DeepFace.analyze(frame)
         
         # show feedback
-        accuracy = face_analysis["emotion"][emotion]
+        #accuracy = face_analysis["emotion"][emotion]
+        accuracy = 70
         if (accuracy < 80):
             image = accuracy_dict[50]
         elif (accuracy < 95):
@@ -242,7 +249,10 @@ def play_game():
         feedback_sound = getAction("sound", "correct.wav")
         sendMessage(feedback_sound)
 
-        time.sleep(1)
+        time.sleep(4)
+
+        image_display = getAction("image", "normal")
+        sendMessage(image_display)
 
         # change player
         params["pan"] = -params["pan"]
@@ -250,12 +260,14 @@ def play_game():
         sendMessage(pan_message)
         play += 1
 
+        time.sleep(2)
+
     # end game sound
     print("Ending game...")
-    final_sound = getAction("sound", "end_game.mp3")
+    final_sound = getAction("sound", "end_game.wav")
     sendMessage(final_sound)
 
-    time.sleep(1)
+    time.sleep(5)
 
     # congrats the winer
     winner = max(points, key=points.get)
@@ -267,21 +279,31 @@ def play_game():
     pan_message = getAction("pan", params["pan"])
     sendMessage(pan_message)
 
-    winner_sound = getAction("sound", "winner.mp3")
-    sendMessage(winner_sound) 
+    winner_sound = getAction("sound", "winner.wav")
+    sendMessage(winner_sound)
+
+    time.sleep(3) 
 
 
 if __name__=='__main__':
 
-    elmoIp = "192.168.0.102"
+    elmoIp = "192.168.0.101"
     elmoPort = 4000
     clientIp = "192.168.0.114"
     server = (elmoIp, elmoPort)
 
     elmoSocket = connectElmo(elmoIp, elmoPort, clientIp)
-    elmoSocket.settimeout(1) # not sure what this is doing
 
     params = {"pan": 0, "tilt": 0}
+
+    pan_message = getAction("pan", params["pan"])
+    sendMessage(pan_message)
+
+    tilt_message = getAction("tilt", params["tilt"])
+    sendMessage(tilt_message) 
+
+    image_display = getAction("image", "normal")
+    sendMessage(image_display)
 
     play_game()
 

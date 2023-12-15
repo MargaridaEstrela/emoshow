@@ -15,19 +15,14 @@ myTilt = mw.Tilt()
 myOnboard = mw.Onboard()
 mySpeakers = mw.Speakers()
 myLeds = mw.Leds()
+myServer = mw.Server()
 
 myPan.enable = True
 myTilt.enable = True
 
-print(os.getcwd())
-print("chaging image")
-myOnboard.image = "images/simon_images/angry.png"
-print("image was changed")
-
 image_path = "images/simon_images/"
-sound_path = "sounds/simon_sounds/"
-icon_path = "icons/simon_icons/"
-
+sound_path = "simon_sounds/"
+icon_path = "icons/"
 
 def parseMessage(message):
 
@@ -53,7 +48,10 @@ def parseMessage(message):
 
     elif command == "image":
         print("[IMAGE] setting...")
-        image_src = os.path.join(image_path, f"{value}.png")
+        if "simon_images" in value:
+            image_src = value
+        else:
+            image_src = os.path.join(image_path, f"{value}.png")
         myOnboard.image = image_src      
         print("[IMAGE] src: ", image_src)
 
@@ -67,13 +65,15 @@ def parseMessage(message):
     elif command == "sound":
         print("[SOUND] setting...")
         sound_src = os.path.join(sound_path, f"{value}")
-        mySpeakers.url = sound_src    
+        sound_url = myServer.url_for_sound(sound_src)
+        mySpeakers.url =  sound_url    
         print("[SOUND] src: ", sound_src)
 
     elif command == "icon":
         print("[ICON] setting...")
-        icon_src = os.path.join(icon_path, f"{value}.png")
-        myLeds.load_from_url(icon_src)    
+        icon_url = myServer.url_for_icon(value)
+        icon_src = os.path.join(icon_path, f"{value}")
+        myLeds.load_from_url(icon_url)    
         print("[ICON] src: ", icon_src) 
 
     elif command == "game":
@@ -88,7 +88,7 @@ def parseMessage(message):
 if __name__=='__main__':
 
     print("Starting connection...")
-    elmo_ip = '192.168.0.102' #Server ip
+    elmo_ip = '192.168.0.101' #Server ip
     port = 4000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
