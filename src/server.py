@@ -123,7 +123,6 @@ def loop():
 
 
 def userLoop():
-
     data = sendMessage("getImage::off")
     imageList = eval(data)
 
@@ -135,6 +134,43 @@ def userLoop():
         if counter > len(imageList)-1:
             counter = 0
         time.sleep(1)
+
+
+def setDefaultAngles():   
+    # set default pan
+    pan_message = getAction("pan", default_pan)
+    sendMessage(pan_message)
+   
+    # set default tilt
+    tilt_message = getAction("tilt", default_tilt)
+    sendMessage(tilt_message)
+
+
+def adjusParameters():
+
+    while True:
+        command = input("Command: ")
+
+        if command == 'game':
+            print("All params set!")
+            break
+
+        if command == "pan" or command == "tilt":
+            value = input("Value: ")
+            param_message = getAction(command, value)
+            sendMessage(param_message)
+
+
+def introduceGame():
+    intro_message = getAction("sound", "intro.m4a")
+    sendMessage(intro_message)
+    time.sleep(0.5)
+    rules_message = getAction("sound", "rules.m4a")
+    sendMessage(rules_message)
+    time.sleep(0.5)
+    ready_message = getAction("sound", "ready.m4a")
+    sendMessage(ready_message)
+    time.sleep(0.5)
 
 
 def takePictureSequence():
@@ -154,26 +190,13 @@ def takePictureSequence():
 
 def play_game():
 
+    setDefaultAngles()
+    adjusParameters()
+
     print("Starting game...")
-    
-    # set default pan
-    pan_message = getAction("pan", default_pan)
-    sendMessage(pan_message)
-   
-    # set default tilt
-    tilt_message = getAction("tilt", default_tilt)
-    sendMessage(tilt_message)
 
     # introduce game
-    intro_message = getAction("sound", "intro.m4a")
-    sendMessage(intro_message)
-    time.sleep(0.5)
-    rules_message = getAction("sound", "rules.m4a")
-    sendMessage(rules_message)
-    time.sleep(0.5)
-    ready_message = getAction("sound", "ready.m4a")
-    sendMessage(ready_message)
-    time.sleep(0.5)
+    introduceGame()
 
     # start game
     for emotion in emotions:

@@ -77,6 +77,9 @@ def parseMessage(message):
         myLeds.load_from_url(icon_src)    
         print("[ICON] src: ", icon_src) 
 
+    elif command == "game":
+        print("[GAME] starting...")
+        
 
 if __name__=='__main__':
 
