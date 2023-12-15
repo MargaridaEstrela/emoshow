@@ -17,6 +17,8 @@ emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
 #dictionary with all the emotions possible to the respective accuracy
 accuracy_dict = {50: "thinking", 80: "normal", 95: "love"}
 
+points = {"0": 0, "1": 0}
+
 
 def detect_faces(frame):
     """
@@ -209,6 +211,8 @@ def play_game():
     # introduce game
     introduceGame()
 
+    play = 1
+
     # start game
     for emotion in emotions:
         emotion_request = getAction("sound", f"{emotion}.m4a")
@@ -231,7 +235,10 @@ def play_game():
         image_display = getAction("image", image)
         sendMessage(image_display)
 
-        #play sound randomly
+        # points
+        points[str(play%2)] += accuracy
+
+        # play sound randomly
         feedback_sound = getAction("sound", "correct.wav")
         sendMessage(feedback_sound)
 
@@ -241,13 +248,25 @@ def play_game():
         params["pan"] = -params["pan"]
         pan_message = getAction("pan", params["pan"])
         sendMessage(pan_message)
+        play += 1
 
     # end game sound
     print("Ending game...")
     final_sound = getAction("sound", "end_game.mp3")
     sendMessage(final_sound)
 
+    time.sleep(1)
+
     # congrats the winer
+    winner = max(points, key=points.get)
+    params["pan"] = abs(params["pan"])
+
+    if winner == "0":
+        params["pan"] = - params["pan"]
+
+    pan_message = getAction("pan", params["pan"])
+    sendMessage(pan_message)
+
     winner_sound = getAction("sound", "winner.mp3")
     sendMessage(winner_sound) 
 
