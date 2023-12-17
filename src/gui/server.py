@@ -87,25 +87,28 @@ class ElmoServer:
 
     def grabImage(self):
         # grab the image from the camera
-        url = f"http://{self.elmoIp}:8080/stream.mjpg"
-        response = requests.get(url, stream=True)
+        if self.debug == False:
+            url = f"http://{self.elmoIp}:8080/stream.mjpg"
+            response = requests.get(url, stream=True)
 
-        if response.status_code == 200:
-            # maens that it is a valid response
-            stream = response.iter_content(chunk_size=1024)
-            bytes_ = b''
-            for chunk in stream:
-                bytes_ += chunk
-                a = bytes_.find(b'\xff\xd8')
-                b = bytes_.find(b'\xff\xd9')
-                if a != -1 and b != -1:
-                    jpg = bytes_[a:b+2]
-                    bytes_ = bytes_[b+2:]
-                    frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
-                    break
-
-            return frame
-        return None
+            if response.status_code == 200:
+                # maens that it is a valid response
+                stream = response.iter_content(chunk_size=1024)
+                bytes_ = b''
+                for chunk in stream:
+                    bytes_ += chunk
+                    a = bytes_.find(b'\xff\xd8')
+                    b = bytes_.find(b'\xff\xd9')
+                    if a != -1 and b != -1:
+                        jpg = bytes_[a:b+2]
+                        bytes_ = bytes_[b+2:]
+                        frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                        break
+                
+                # resize the image to 480, 640
+                frame = cv2.resize(frame, (640, 480))
+                return frame
+        return np.full((480, 640, 3), 26, dtype=np.uint8)
 
 
     def introduceGame(self):
@@ -141,9 +144,16 @@ class ElmoServer:
         data = self.sendMessage(f"game::off")
 
         time.sleep(1)
-
+        if self.debug == False:
+            self.elmoSocket.shutdown(socket.SHUT_RDWR)
+            self.elmoSocket.close()
+            return 
+        return
         # close all
-        self.elmoSocket.close()
+    
+
+    def playSound(self, sound):
+        data = self.sendMessage(f"sound::{sound}")
 
 
     def takePicture(self):

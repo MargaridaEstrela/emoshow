@@ -1,6 +1,8 @@
 import PySimpleGUI as sg
 from server import ElmoServer
 import random
+import numpy as np
+import cv2
 
 elmoIp = "192.168.1.92"
 elmoPort = 4000
@@ -13,6 +15,14 @@ points = {"0": 0, "1": 0}
 bad_face = ["cry", "confused", "anger"]
 good_face = ["normal", "rolling_eyes", "thinking"]
 awesome_face = ["love", "images/simon_images/stars.gif", "blush"]
+
+
+# when the respective buttons are clicked, one of the sounds in the list will be played at random
+goodSoundList = []  # the list of sounds containing the necessary sounds for the good buttons
+badSoundList = []   # the list of sounds containing the necessary sounds for the bad buttons
+awesomeSoundList = []   # the list of sounds containing the necessary sounds for the awesome buttons
+
+
 
 myElmo = ElmoServer(elmoIp, elmoPort, clientIp, True)
 
@@ -37,6 +47,7 @@ layout = [
     [sg.Text("Player2: "), sg.Text("0", key="player2_points")],
     [sg.Text('', size=(1, 1))], 
     [sg.Button("Winner", size=(24, 1)), sg.Button("Close All", size=(24, 1))],
+    [sg.Image(filename="", key="image")]  
 ]
 
 # Create the Window
@@ -45,9 +56,14 @@ window = sg.Window('Elmo: Wizard of OZ', layout)
 
 
 while True:
-    event, values = window.read()
+    event, values = window.read(timeout=60)
 
     print(event, values)
+
+    # lets update the image
+    img = myElmo.grabImage()
+    imgbytes = cv2.imencode(".png", img)[1].tobytes()
+    window['image'].update(data=imgbytes)
 
     if event == "Toggle Behaviour":
         print("Toggling Behaviour")
@@ -123,14 +139,24 @@ while True:
     
     elif event == "Bad":
         face = random.choice(bad_face)
+        sound = random.choice(badSoundList) if len(badSoundList) > 0 else ""
+        myElmo.playSound(sound)
+        # need to play a sound from the bad sound list
+
         myElmo.setImage(face)
 
     elif event == "Good":
         face = random.choice(good_face)
+        # need to play a sound from the good sound list
+        sound = random.choice(goodSoundList) if len(goodSoundList) > 0 else ""
+        myElmo.playSound(sound)
         myElmo.setImage(face)
 
     elif event == "Awesome":
         face = random.choice(awesome_face)
+        #need to play a sound from the awesome sound list
+        sound = random.choice(awesomeSoundList) if len(awesomeSoundList) > 0 else ""
+        myElmo.playSound(sound)
         myElmo.setImage(face)
 
     if event == sg.WIN_CLOSED or event == "Close All": # if user closes window or clicks cancel
