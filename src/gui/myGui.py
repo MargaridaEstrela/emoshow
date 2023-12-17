@@ -28,7 +28,7 @@ layout = [
     [sg.Button("Toggle Behaviour", size=(15, 1)), sg.Button("Toggle Motors", size=(15, 1))],
     [sg.Text('', size=(1, 1))],
     [sg.Text("Game")],
-    [sg.Button("Intro", size=(10, 1)), sg.Button("Play", size=(10, 1)), sg.Button("🔴", size=(10, 1)), sg.Button("Next", size=(10, 1)), sg.Button("End", size=(10, 1))],
+    [sg.Button("Intro", size=(10, 1)), sg.Button("Play", size=(10, 1)), sg.Button("🔴", size=(10, 1)), sg.Button("Next", size=(10, 1))],
     [sg.Text('', size=(1, 1))], 
     [sg.Text("Accuracy: "), sg.Text("0", key="player_accuracy")],
     [sg.Button("Bad", size=(10, 1)), sg.Button("Good", size=(10, 1)), sg.Button("Awesome", size=(10, 1))],
@@ -36,7 +36,7 @@ layout = [
     [sg.Text("Player1: "), sg.Text("0", key="player1_points")],
     [sg.Text("Player2: "), sg.Text("0", key="player2_points")],
     [sg.Text('', size=(1, 1))], 
-    [sg.Button("Winner", size=(30, 1)), sg.Button("Close All", size=(30, 1))],
+    [sg.Button("Winner", size=(24, 1)), sg.Button("Close All", size=(24, 1))],
 ]
 
 # Create the Window
