@@ -10,7 +10,7 @@ import time
 
 class ElmoServer:
 
-    def __init__(self, elmoIp="192.168.1.92", elmoPort=4000, clientIp="192.168.1.84"):
+    def __init__(self, elmoIp="192.168.1.92", elmoPort=4000, clientIp="192.168.1.84", debug=False):
         self.elmoIp = elmoIp
         self.elmoPort = elmoPort
         self.clientIp = clientIp
@@ -21,20 +21,31 @@ class ElmoServer:
         #self.sendRequestCommand("enable_behaviour", name="look_around", control=False)
         #self.sendRequestCommand("set_tilt_torque", control=False)
         #self.sendRequestCommand("set_pan_torque", control=False)
-
-        self.connectElmo()
-
+        if debug == False:
+            self.connectElmo()
+            self.debug = False
+        else:
+            print("debug mode has been activated")
+            self.debug = True
+    
     def connectElmo(self):
         # this will start the socket used to communicate with elmo
         self.elmoSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.elmoSocket.bind((self.clientIp,self.elmoPort))
         print("Connecting as okay")
+        
 
 
     def sendMessage(self, message):
         """
         This will send a message to elmo
         """
+
+        if self.debug == True:
+            # means that I am in debug mode and do not want to send the message
+            print("Fake Sending: " + message)
+            return "fake"
+            
         print("Sending message: " + message)
         self.elmoSocket.sendto(message.encode('utf-8'), (self.elmoIp, self.elmoPort))
         data, addr = self.elmoSocket.recvfrom(1024)     # wait for the response from elmo

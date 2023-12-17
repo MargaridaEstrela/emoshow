@@ -14,7 +14,7 @@ bad_face = ["cry", "confused", "anger"]
 good_face = ["normal", "rolling_eyes", "thinking"]
 awesome_face = ["love", "images/simon_images/stars.gif", "blush"]
 
-myElmo = ElmoServer(elmoIp, elmoPort, clientIp)
+myElmo = ElmoServer(elmoIp, elmoPort, clientIp, True)
 
 sg.theme('DarkBlue')   # Add a touch of color
 
