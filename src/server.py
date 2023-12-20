@@ -29,8 +29,8 @@ class ElmoServer:
             print("debug mode has been activated")
             self.debug = True
 
-        data = self.sendMessage("image::normal")
-        data = self.sendMessage("icon::elmo_idm.png") 
+        self.sendMessage("image::normal")
+        self.sendMessage("icon::elmo_idm.png") 
     
     def connectElmo(self):
         # this will start the socket used to communicate with elmo
