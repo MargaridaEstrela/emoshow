@@ -125,15 +125,7 @@ class ElmoServer:
 
 
     def introduceGame(self):
-        data = self.sendMessage("sound::intro.wav")
-        time.sleep(6)
-
-        data = self.sendMessage("sound::rules.wav")
-        time.sleep(6)
-
-        data = self.sendMessage("sound::ready.wav")
-        time.sleep(6)
-
+        data = self.sendMessage("sound::introGame.wav")
 
     def playGame(self):
         # this will start the game
@@ -170,21 +162,19 @@ class ElmoServer:
 
 
     def takePicture(self):
+        data = self.sendMessage("sound::takePicture.wav")
+
         # show 3, 2, 1 and take a picture
         data = self.sendMessage("icon::3.jpeg")
-        data = self.sendMessage("sound::3.wav")
-        time.sleep(1.2)
+        time.sleep(1)
 
         data = self.sendMessage("icon::2.jpeg")
-        data = self.sendMessage("sound::2.wav")
-        time.sleep(1.2)
+        time.sleep(1)
 
         data = self.sendMessage("icon::1.jpeg")
-        data = self.sendMessage("sound::1.wav")
-        time.sleep(1.2)
+        time.sleep(1)
 
         data = self.sendMessage("icon::camera.jpeg")
-        data = self.sendMessage("sound::click.wav")
 
         return self.grabImage()
 
