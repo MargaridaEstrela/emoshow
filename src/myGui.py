@@ -4,11 +4,7 @@ import random
 import numpy as np
 import cv2
 import math
-
-# setting up IP addresses for communication with Elmo
-elmoIp = "192.168.0.101"  # replace with the IP address of Elmo
-elmoPort = 4000  # replace with the port number used by Elmo
-clientIp = "192.168.0.102"  # replace with the IP address of the client
+import sys
 
 # list of emotions for facial expression analysis
 emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
@@ -38,8 +34,16 @@ feedback_sounds = {"cry": "lagrimas.wav",
                    "images/simon_images/stars.gif": "estrelas.wav", 
                    "blush": "smillingEyes.wav"}
 
+# start with debug mode to run as fake
+debug_mode = "--debug" in sys.argv
+
+# setting up IP addresses for communication with Elmo
+elmoIp = input("ElmoIP: ")  # get elmoIp from command line (if --debug, press enter)
+elmoPort = input("Port: ")  # get elmoPort from command line (if --debug, press enter)
+clientIp = input("ClientIp: ")  # get clientIp from command line (if --debug, press enter)
+
 # connection with Elmo 
-myElmo = ElmoServer(elmoIp, elmoPort, clientIp, True)
+myElmo = ElmoServer(elmoIp, elmoPort, clientIp, debug_mode)
 
 sg.theme('DarkBlue')   # add a touch of color
 
@@ -56,20 +60,21 @@ layout = [
     [sg.Text("Accuracy: "), sg.Text("0  ", key="player_accuracy"), sg.Text('', size=(46, 1)), sg.Text("Player1: "), sg.Text("0", key="player1_points", size=(10, 1))],
     [sg.Button("Bad", size=(10, 1)), sg.Button("Good", size=(10, 1)), sg.Button("Awesome", size=(10, 1)), sg.Text('', size=(20, 1)), sg.Text("Player2: "), sg.Text("0", key="player2_points", size=(10, 1))],
     [sg.Text('', size=(1, 2))], 
-    [sg.Text('', size=(2, 1)), sg.Button("Winner", size=(24, 1)), sg.Text('', size=(5, 1)), sg.Button("Restart", size=(24, 1)), sg.Text('', size=(5, 1)), sg.Button("Close All", size=(24, 1))],
+    [sg.Text('', size=(1, 1)), sg.Button("Winner", size=(24, 1)), sg.Text('', size=(5, 1)), sg.Button("Restart", size=(24, 1)), sg.Text('', size=(5, 1)), sg.Button("Close All", size=(24, 1))],
     [sg.Text('', size=(1, 1))], 
     [sg.Image(filename="", key="image")]  
 ]
 
 # Create the Window
-window = sg.Window('Elmo: Wizard of OZ', layout)
+title = 'Elmo: WoZ'
+if (len(elmoIp) > 0): title += '  ' + 'idmind@' + elmoIp
+window = sg.Window(title, layout)
+
 # Event Loop to process "events" and get the "values" of the inputs
-
-
 while True:
     event, values = window.read()
 
-    print(event, values)
+    print("[EVENT]: ", event)
 
     # lets update the image
     img = myElmo.grabImage()
@@ -146,6 +151,13 @@ while True:
             myElmo.endGame()
         else:
             emotion = emotions[play-1]
+            # check each player is next
+            player = (play + 1) % 2 + 1
+            if (player == 1):
+                myElmo.moveLeft(default_pan, default_tilt)
+            else:
+                myElmo.moveRight(default_pan, default_tilt)
+            # say new emotion
             myElmo.sayEmotion(emotion)
     
     if event == "Bad":

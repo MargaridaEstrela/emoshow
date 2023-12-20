@@ -10,7 +10,7 @@ import time
 
 class ElmoServer:
 
-    def __init__(self, elmoIp="192.168.0.101", elmoPort=4000, clientIp="192.168.0.102", debug=False):
+    def __init__(self, elmoIp, elmoPort, clientIp, debug=False):
         self.elmoIp = elmoIp
         self.elmoPort = elmoPort
         self.clientIp = clientIp
@@ -32,12 +32,12 @@ class ElmoServer:
         self.sendMessage("image::normal")
         self.sendMessage("icon::elmo_idm.png") 
     
+
     def connectElmo(self):
         # this will start the socket used to communicate with elmo
         self.elmoSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.elmoSocket.bind((self.clientIp,self.elmoPort))
-        print("Connecting as okay")
-        
+        print("Successful connection!")
 
 
     def sendMessage(self, message):
@@ -92,6 +92,11 @@ class ElmoServer:
         data = self.sendMessage(f"pan::{default_pan}")
         data = self.sendMessage(f"tilt::{default_tilt}")
         
+
+    def moveNext(self, default_pan, default_tilt):
+        data = self.sendMessage(f"pan::{default_pan}")
+        data = self.sendMessage(f"tilt::{default_tilt}") 
+
 
     def grabImage(self):
         # grab the image from the camera
@@ -168,19 +173,18 @@ class ElmoServer:
         # show 3, 2, 1 and take a picture
         data = self.sendMessage("icon::3.jpeg")
         data = self.sendMessage("sound::3.wav")
-        time.sleep(1.5)
+        time.sleep(1.2)
 
         data = self.sendMessage("icon::2.jpeg")
         data = self.sendMessage("sound::2.wav")
-        time.sleep(1.5)
+        time.sleep(1.2)
 
         data = self.sendMessage("icon::1.jpeg")
         data = self.sendMessage("sound::1.wav")
-        time.sleep(1.5)
+        time.sleep(1.2)
 
         data = self.sendMessage("icon::camera.jpeg")
         data = self.sendMessage("sound::click.wav")
-        time.sleep(1.5)
 
         return self.grabImage()
 
