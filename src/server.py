@@ -10,7 +10,7 @@ import time
 
 class ElmoServer:
 
-    def __init__(self, elmoIp="192.168.0.101", elmoPort=4000, clientIp="192.168.0.114", debug=False):
+    def __init__(self, elmoIp="192.168.0.101", elmoPort=4000, clientIp="192.168.0.102", debug=False):
         self.elmoIp = elmoIp
         self.elmoPort = elmoPort
         self.clientIp = clientIp
@@ -28,6 +28,9 @@ class ElmoServer:
         else:
             print("debug mode has been activated")
             self.debug = True
+
+        data = self.sendMessage("image::normal")
+        data = self.sendMessage("icon::elmo_idm.png") 
     
     def connectElmo(self):
         # this will start the socket used to communicate with elmo
@@ -117,19 +120,19 @@ class ElmoServer:
 
 
     def introduceGame(self):
-        data = self.sendMessage(f"sound::intro.wav")
+        data = self.sendMessage("sound::intro.wav")
         time.sleep(6)
 
-        data = self.sendMessage(f"sound::rules.wav")
+        data = self.sendMessage("sound::rules.wav")
         time.sleep(6)
 
-        data = self.sendMessage(f"sound::ready.wav")
+        data = self.sendMessage("sound::ready.wav")
         time.sleep(6)
 
 
     def playGame(self):
         # this will start the game
-        data = self.sendMessage(f"game::on")
+        data = self.sendMessage("game::on")
     
 
     def sayEmotion(self, emotion):
@@ -137,16 +140,16 @@ class ElmoServer:
 
 
     def endGame(self):
-        data = self.sendMessage(f"sound::end_game.wav")
+        data = self.sendMessage("sound::end_game.wav")
 
 
     def congratsWinner(self):
-        data = self.sendMessage(f"sound::winner.wav")
+        data = self.sendMessage("sound::winner.wav")
 
 
     def closeAll(self):
         # this will end the game
-        data = self.sendMessage(f"game::off")
+        data = self.sendMessage("game::off")
 
         time.sleep(1)
         if self.debug == False:
@@ -160,19 +163,24 @@ class ElmoServer:
     def playSound(self, sound):
         data = self.sendMessage(f"sound::{sound}")
 
+
     def takePicture(self):
         # show 3, 2, 1 and take a picture
-        data = self.sendMessage(f"icon::call.png")
-        time.sleep(1)
+        data = self.sendMessage("icon::3.jpeg")
+        data = self.sendMessage("sound::3.wav")
+        time.sleep(1.5)
 
-        data = self.sendMessage(f"icon::music.png")
-        time.sleep(1)
+        data = self.sendMessage("icon::2.jpeg")
+        data = self.sendMessage("sound::2.wav")
+        time.sleep(1.5)
 
-        data = self.sendMessage(f"icon::call.png")
-        time.sleep(1)
+        data = self.sendMessage("icon::1.jpeg")
+        data = self.sendMessage("sound::1.wav")
+        time.sleep(1.5)
 
-        data = self.sendMessage(f"icon::elmo_idm.png")
-        time.sleep(1)
+        data = self.sendMessage("icon::camera.jpeg")
+        data = self.sendMessage("sound::click.wav")
+        time.sleep(1.5)
 
         return self.grabImage()
 
@@ -185,9 +193,9 @@ class ElmoServer:
 
     def toggleMotors(self):
         # this will enable elmo's motors
-        data = self.sendMessage(f"motors::enable")
+        data = self.sendMessage("motors::enable")
         self.activeMotors = not self.activeMotors
-        print("Motors are now: ", self.activeMotors)
+        print("Motors: ", self.activeMotors)
         self.sendRequestCommand("set_tilt_torque", control=self.activeMotors)
         self.sendRequestCommand("set_pan_torque", control=self.activeMotors)
 
@@ -196,7 +204,7 @@ class ElmoServer:
         # self.sendRequestCommand("disable_behaviour", name=name)
         self.activeBehaviour = not self.activeBehaviour
         self.sendRequestCommand("enable_behaviour", name="look_around", control=self.activeBehaviour)
-        print("toggleBehaviour")
+        print("Behaviour: ", self.activeBehaviour)
     
 
     def sendRequestCommand(self, command, **kwargs):
@@ -215,6 +223,6 @@ if __name__=='__main__':
 
     elmoIp = "192.168.0.101"
     elmoPort = 4000
-    clientIp = "192.168.0.114"
+    clientIp = "192.168.0.102"
 
     myElmo = ElmoServer(elmoIp, elmoPort, clientIp)

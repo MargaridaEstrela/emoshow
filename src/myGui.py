@@ -8,7 +8,7 @@ import math
 # setting up IP addresses for communication with Elmo
 elmoIp = "192.168.0.101"  # replace with the IP address of Elmo
 elmoPort = 4000  # replace with the port number used by Elmo
-clientIp = "192.168.0.114"  # replace with the IP address of the client
+clientIp = "192.168.0.102"  # replace with the IP address of the client
 
 # list of emotions for facial expression analysis
 emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
@@ -27,10 +27,16 @@ awesome_face = ["love", "images/simon_images/stars.gif", "blush"]  # the list of
 default_pan = 0
 default_tilt = 0
 
-# when the respective buttons are clicked, one of the sounds in the list will be played at random
-goodSoundList = []  # the list of sounds containing the necessary sounds for the good button
-badSoundList = []   # the list of sounds containing the necessary sounds for the bad button
-awesomeSoundList = []   # the list of sounds containing the necessary sounds for the awesome button
+# when the respective buttons are clicked, one of the sounds in the list will be played accordingly with the random face shown
+feedback_sounds = {"cry": "lagrimas.wav", 
+                   "confused": "question.wav", 
+                   "anger": "virgulas.wav", 
+                   "normal": "normal.wav", 
+                   "rolling_eyes": "olharCima.wav", 
+                   "thinking": "normal.wav", 
+                   "love": "coracoes.wav", 
+                   "images/simon_images/stars.gif": "estrelas.wav", 
+                   "blush": "smillingEyes.wav"}
 
 # connection with Elmo 
 myElmo = ElmoServer(elmoIp, elmoPort, clientIp, True)
@@ -46,7 +52,7 @@ layout = [
     [sg.Text("Pan", size=(3, 1)), sg.InputText(key="pan_value", size=(18, 1)), sg.Button("Set", key="SetPan", size=(8, 1)), sg.Text('', size=(5, 1)), sg.Button("Set Default", key="SetDefaultPan", size=(10, 1)), sg.Text('', size=(26, 1)), sg.Button("Play", size=(10, 1))],
     [sg.Text("Tilt", size=(3, 1)), sg.InputText(key="tilt_value", size=(18, 1)), sg.Button("Set", key="SetTilt", size=(8, 1)),  sg.Text('', size=(5, 1)), sg.Button("Set Default", key="SetDefaultTilt", size=(10, 1)), sg.Text('', size=(26, 1)), sg.Button("🔴", size=(10, 1))],
     [sg.Button("Toggle Behaviour", size=(15, 1)), sg.Button("Toggle Motors", size=(15, 1)), sg.Text('', size=(47, 1)), sg.Button("Next", size=(10, 1))],
-    [sg.Text('', size=(1, 2))],
+    [sg.Text('', size=(1, 2))], 
     [sg.Text("Accuracy: "), sg.Text("0  ", key="player_accuracy"), sg.Text('', size=(46, 1)), sg.Text("Player1: "), sg.Text("0", key="player1_points", size=(10, 1))],
     [sg.Button("Bad", size=(10, 1)), sg.Button("Good", size=(10, 1)), sg.Button("Awesome", size=(10, 1)), sg.Text('', size=(20, 1)), sg.Text("Player2: "), sg.Text("0", key="player2_points", size=(10, 1))],
     [sg.Text('', size=(1, 2))], 
@@ -61,7 +67,7 @@ window = sg.Window('Elmo: Wizard of OZ', layout)
 
 
 while True:
-    event, values = window.read(timeout=60)
+    event, values = window.read()
 
     print(event, values)
 
@@ -100,7 +106,7 @@ while True:
         value = values["pan_value"]
         if value: 
             myElmo.movePan(value)
-            default_pan = value
+            default_pan = int(value)
     
     if event == "SetDefaultPan":
         myElmo.movePan(default_pan)
@@ -109,7 +115,7 @@ while True:
         value = values["tilt_value"]
         if value:
             myElmo.moveTilt(value)
-            default_tilt = value
+            default_tilt = int(value)
 
     if event == "SetDefaultTilt":
         myElmo.movePan(default_tilt)
@@ -144,25 +150,25 @@ while True:
     
     if event == "Bad":
         face = random.choice(bad_face)
-        sound = random.choice(badSoundList) if len(badSoundList) > 0 else ""
-        myElmo.playSound(sound)
-        # need to play a sound from the bad sound list
-
+        sound = feedback_sounds[face]
         myElmo.setImage(face)
+        myElmo.playSound(sound)
 
     elif event == "Good":
         face = random.choice(good_face)
-        # need to play a sound from the good sound list
-        sound = random.choice(goodSoundList) if len(goodSoundList) > 0 else ""
-        myElmo.playSound(sound)
+        sound = feedback_sounds[face]
         myElmo.setImage(face)
+        myElmo.playSound(sound)
 
     elif event == "Awesome":
         face = random.choice(awesome_face)
-        #need to play a sound from the awesome sound list
-        sound = random.choice(awesomeSoundList) if len(awesomeSoundList) > 0 else ""
-        myElmo.playSound(sound)
+        sound = feedback_sounds[face]
         myElmo.setImage(face)
+        myElmo.playSound(sound)
+
+    if event == "Normal":
+        myElmo.setImage("normal")
+        myElmo.sendMessage("icon::elmo_idm.png")
 
     if event == "Winner":
         winner = max(points, key=points.get)

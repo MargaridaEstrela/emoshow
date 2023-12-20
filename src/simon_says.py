@@ -22,7 +22,7 @@ myTilt.enable = True
 
 image_path = "images/simon_images/"
 sound_path = "simon_sounds/"
-icon_path = "icons/"
+icon_path = "simons_icons/"
 
 def parseMessage(message):
 
@@ -71,10 +71,10 @@ def parseMessage(message):
 
     elif command == "icon":
         print("[ICON] setting...")
-        icon_url = myServer.url_for_icon(value)
         icon_src = os.path.join(icon_path, f"{value}")
-        myLeds.load_from_url(icon_url)    
-        print("[ICON] src: ", icon_src) 
+        icon_url = myServer.url_for_icon(icon_src)
+        myLeds.load_from_url(icon_url)
+        print("[ICON] src: ", icon_url)
 
     elif command == "game":
         if value == "on":
