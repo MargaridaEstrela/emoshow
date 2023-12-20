@@ -35,18 +35,21 @@ feedback_sounds = {"cry": "lagrimas.wav",
                    "images/simon_images/stars.gif": "estrelas.wav", 
                    "blush": "smillingEyes.wav"}
 
-# start with debug mode to run as fake
-debug_mode = "--debug" in sys.argv
+# gettin IP addresses from command line to communicate with Elmo
+if len(sys.argv) == 1:
+    elmoIp = ""
+    elmoPort = 0
+    clientIp = ""
+    debug_mode = True  # running in fake mode
 
-# setting up IP addresses for communication with Elmo
-elmoIp = input("ElmoIP: ")  # get elmoIp from command line (if --debug, press enter)
-elmoPort = input("Port: ")  # get elmoPort from command line (if --debug, press enter)
-clientIp = input("ClientIp: ")  # get clientIp from command line (if --debug, press enter)
-
-if (len(elmoPort) == 0): elmoPort = 0
+elif len(sys.argv) == 4:
+    elmoIp = sys.argv[1]
+    elmoPort = sys.argv[2]
+    clientIp = sys.argv[3]
+    debug_mode = False
 
 # connection with Elmo 
-myElmo = ElmoServer(str(elmoIp),int(elmoPort), clientIp, debug_mode)
+myElmo = ElmoServer(elmoIp, int(elmoPort), clientIp, debug_mode)
 
 sg.theme('DarkBlue')   # add a touch of color
 
