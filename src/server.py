@@ -47,7 +47,7 @@ class ElmoServer:
 
         if self.debug == True:
             # means that I am in debug mode and do not want to send the message
-            print("Fake Sending: " + message)
+            print("[Fake]: " + message)
             return "fake"
             
         print("Sending message: " + message)

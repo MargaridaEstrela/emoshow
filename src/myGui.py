@@ -71,7 +71,12 @@ layout = [
 # Create the Window
 title = 'Elmo: WoZ'
 if (len(elmoIp) > 0): title += '  ' + 'idmind@' + elmoIp
-window = sg.Window(title, layout)
+window = sg.Window(title, layout, finalize=True)
+
+# Initial image update
+img = myElmo.grabImage()
+imgbytes = cv2.imencode(".png", img)[1].tobytes()
+window['image'].update(data=imgbytes)
 
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
@@ -117,6 +122,12 @@ while True:
             default_pan = int(value)
     
     if event == "SetDefaultPan":
+        value = values["pan_value"]
+        # update value
+        if (value):
+            default_pan = int(value)
+        else: 
+            default_pan = 0
         myElmo.movePan(default_pan)
 
     if event == "SetTilt":
@@ -126,6 +137,12 @@ while True:
             default_tilt = int(value)
 
     if event == "SetDefaultTilt":
+        value = values["tilt_value"]
+        # update value
+        if (value):
+            default_pan = int(value)
+        else:
+            default_tilt = 0
         myElmo.movePan(default_tilt)
 
     if event == "Intro":
