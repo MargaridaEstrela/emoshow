@@ -143,7 +143,6 @@ class ElmoServer:
     def congratsWinner(self):
         data = self.sendMessage("sound::winner.wav")
 
-
     def closeAll(self):
         # this will end the game
         data = self.sendMessage("game::off")
@@ -172,7 +171,7 @@ class ElmoServer:
         time.sleep(0.5)
 
         data = self.sendMessage("icon::1.jpeg")
-        time.sleep(1)
+        time.sleep(0.7)
 
         data = self.sendMessage("icon::camera.jpeg")
 

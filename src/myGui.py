@@ -8,7 +8,7 @@ import sys
 import time
 
 # list of emotions for facial expression analysis
-emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
+emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise"]
 
 # variables to control the game
 play = 1  # play number in the game (incremented with each play)
@@ -146,13 +146,17 @@ while True:
             default_pan = int(value)
         else:
             default_tilt = 0
-        myElmo.movePan(default_tilt)
+        myElmo.moveTilt(default_tilt)
 
     if event == "Intro":
+        myElmo.movePan(0)
+        time.sleep(2)
         myElmo.introduceGame()
         myElmo.playGame()
 
     elif event == "Play":
+        myElmo.movePan(default_pan)
+        time.sleep(2) 
         emotion = emotions[play-1]
         myElmo.sayEmotion(emotion)
     
@@ -160,7 +164,10 @@ while True:
         frame = myElmo.takePicture()
         emotion = emotions[play-1]
         value = myElmo.analysePicture(frame, emotion)
-        value = round(value)
+        if value:
+            value = round(value)
+        else:
+            value = 50
         # update the text box with the result
         window['player_accuracy'].update(value)
         # update points and display
@@ -169,6 +176,7 @@ while True:
 
     elif event == "Next":
         play += 1
+        myElmo.sendMessage("image::normal")
         myElmo.sendMessage("icon::elmo_idm.png")
         if play > len(emotions):
             myElmo.movePan(0)
@@ -178,9 +186,9 @@ while True:
             # check each player is next
             player = (play + 1) % 2 + 1
             if (player == 1):
-                myElmo.moveLeft(default_pan, default_tilt)
-            else:
                 myElmo.moveRight(default_pan, default_tilt)
+            else:
+                myElmo.moveLeft(default_pan, default_tilt)
             time.sleep(3)
             # say new emotion
             myElmo.sayEmotion(emotion)
@@ -215,6 +223,13 @@ while True:
         play = 1
         points["1"] = 0
         points["2"] = 0
+        window['player1_points'].update(0)
+        window['player2_points'].update(0)
+        window['player_accuracy'].update(0)
+        myElmo.setImage("normal")
+        myElmo.sendMessage("icon::elmo_idm.png")
+        myElmo.movePan(0)
+
 
     if event == sg.WIN_CLOSED or event == "Close All": # if user closes window or clicks cancel
         print("Windows is going to close")
