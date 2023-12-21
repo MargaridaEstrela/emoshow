@@ -83,7 +83,7 @@ window['image'].update(data=imgbytes)
 
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
-    event, values = window.read(timeout = 5000)
+    event, values = window.read(timeout = 1)
 
     print("[EVENT]: ", event, values)
 
@@ -169,6 +169,7 @@ while True:
 
     elif event == "Next":
         play += 1
+        myElmo.sendMessage("icon::elmo_idm.png")
         if play > len(emotions):
             myElmo.movePan(0)
             myElmo.endGame()
@@ -180,7 +181,7 @@ while True:
                 myElmo.moveLeft(default_pan, default_tilt)
             else:
                 myElmo.moveRight(default_pan, default_tilt)
-            time.sleep(1)
+            time.sleep(3)
             # say new emotion
             myElmo.sayEmotion(emotion)
     
