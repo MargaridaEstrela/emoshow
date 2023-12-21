@@ -169,7 +169,7 @@ class ElmoServer:
         time.sleep(1)
 
         data = self.sendMessage("icon::2.jpeg")
-        time.sleep(1)
+        time.sleep(0.5)
 
         data = self.sendMessage("icon::1.jpeg")
         time.sleep(1)
