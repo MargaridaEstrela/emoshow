@@ -180,7 +180,11 @@ class ElmoServer:
 
 
     def analysePicture(self, frame, emotion):
-        face_analysis = DeepFace.analyze(frame)
+        try:
+            face_analysis = DeepFace.analyze(frame)
+        except Exception as e:
+            print(e)
+            return None
         print(face_analysis[0]["emotion"][emotion])
         return face_analysis[0]["emotion"][emotion]
 
