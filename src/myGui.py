@@ -155,7 +155,7 @@ while True:
         myElmo.playGame()
 
     elif event == "Play":
-        myElmo.movePan(default_pan)
+        myElmo.moveLeft(default_pan, default_tilt)
         time.sleep(2) 
         emotion = emotions[play-1]
         myElmo.sayEmotion(emotion)
@@ -167,7 +167,7 @@ while True:
         if value:
             value = round(value)
         else:
-            value = 50
+            value = 0
         # update the text box with the result
         window['player_accuracy'].update(value)
         # update points and display
@@ -186,9 +186,9 @@ while True:
             # check each player is next
             player = (play + 1) % 2 + 1
             if (player == 1):
-                myElmo.moveRight(default_pan, default_tilt)
-            else:
                 myElmo.moveLeft(default_pan, default_tilt)
+            else:
+                myElmo.moveRight(default_pan, default_tilt)
             time.sleep(3)
             # say new emotion
             myElmo.sayEmotion(emotion)
