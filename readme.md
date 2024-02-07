@@ -366,11 +366,11 @@ Here's how to get play:
 
        - This module parses all commands requested to the robot during the game. 
 
-    - **On Your Computer:** Launch the GUI with  ```python3 wozGui.py [ElmoIP] [ElmoPort] [YourIP]```
+    - **On Your Computer:** Launch the GUI with  ```python3 src/wozGui.py [ElmoIP] [ElmoPort] [YourIP]```
         - `[ElmoIP]` -> the robot's IP address.
         - `[ElmoPort]` -> the chosen port.
         - `[YourIP]` -> your computer's IP address.
-        - For a debug session, launch the GUI without arguments (```python3 wozGui.py```).
+        - For a debug session, launch the GUI without arguments (```python3 src/wozGui.py```).
 
 
 ### WoZ GUI configuration 
