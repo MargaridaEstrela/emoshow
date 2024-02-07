@@ -3,28 +3,27 @@ from server import ElmoServer
 import random
 import numpy as np
 import cv2
-import math
 import sys
 import time
 
-# list of emotions for facial expression analysis
-emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise"]
-
-# variables to control the game
+# Variables to control the game
 play = 1  # play number in the game (incremented with each play)
 player = 1  # current player
 points = {"1": 0, "2": 0}  # points of each player (initially set to 0)
 
-# when the respective buttons are clicked, one of the faces in the list will be played at random
+# Default angles
+default_pan = 0
+default_tilt = 0
+
+# List of emotions for facial expression analysis
+emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise"]
+
+# When the respective buttons are clicked, one of the faces in the list will be played at random
 bad_face = ["cry", "confused", "anger"]  # the list of faces containing the necessary sounds for the bad button
 good_face = ["normal", "rolling_eyes", "thinking"]  # the list of faces containing the necessary faces for the good button
 awesome_face = ["love", "images/simon_images/stars.gif", "blush"]  # the list of faces containing the necessary faces for the awesome button
 
-# default angles
-default_pan = 0
-default_tilt = 0
-
-# when the respective buttons are clicked, one of the sounds in the list will be played accordingly with the random face shown
+# When the respective buttons are clicked, one of the sounds in the list will be played accordingly with the random face shown
 feedback_sounds = {"cry": "lagrimas.wav", 
                    "confused": "question.wav", 
                    "anger": "virgulas.wav", 
@@ -35,12 +34,12 @@ feedback_sounds = {"cry": "lagrimas.wav",
                    "images/simon_images/stars.gif": "estrelas.wav", 
                    "blush": "smillingEyes.wav"}
 
-# gettin IP addresses from command line to communicate with Elmo
+# Getting IP addresses from command line to communicate with Elmo
 if len(sys.argv) == 1:
     elmoIp = ""
     elmoPort = 0
     clientIp = ""
-    debug_mode = True  # running in fake mode
+    debug_mode = True  # running in debug mode
 
 elif len(sys.argv) == 4:
     elmoIp = sys.argv[1]
@@ -48,14 +47,12 @@ elif len(sys.argv) == 4:
     clientIp = sys.argv[3]
     debug_mode = False
 
-# connection with Elmo 
+# Connection with Elmo 
 myElmo = ElmoServer(elmoIp, int(elmoPort), clientIp, debug_mode)
 
-sg.theme('DarkBlue')   # add a touch of color
+sg.theme('DarkBlue')
 
-# All the stuff inside your window.
-
-#lst = sg.Combo(imageList, font=('Arial Bold', 14),  expand_x=True, enable_events=True,  readonly=False, key='-COMBO-')
+# All the stuff inside the window.
 layout = [   
     [sg.Text('ELMO', size=(5, 1)), sg.Text('', size=(80, 1)), sg.Text("GAME", size=(5, 1))],
     [sg.Button("Look Player1", size=(15, 1)), sg.Button("Look Player2", size=(15, 1)), sg.Text('', size=(47, 1)), sg.Button("Intro", size=(10, 1))],

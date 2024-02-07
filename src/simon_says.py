@@ -1,13 +1,6 @@
 #! /usr/bin/env python
-
-from behaviour_look_around import BehaviourLookAround
-import time
-import cv2
-import numpy as np
-import requests
-import socket
-
 import middleware as mw
+import socket
 import os
 
 myPan = mw.Pan()

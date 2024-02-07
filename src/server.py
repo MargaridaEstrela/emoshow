@@ -1,12 +1,10 @@
 from deepface import DeepFace
 
-import time
-import socket
-import requests
-import cv2
 import numpy as np
-import time 
-
+import requests
+import socket
+import time
+import cv2
 
 class ElmoServer:
 
@@ -26,7 +24,7 @@ class ElmoServer:
             self.connectElmo()
             self.debug = False
         else:
-            print("debug mode has been activated")
+            print("Debug mode has been activated")
             self.debug = True
 
         self.sendMessage("image::normal")
@@ -41,10 +39,7 @@ class ElmoServer:
 
 
     def sendMessage(self, message):
-        """
-        This will send a message to elmo
-        """
-
+        # this will send a message to elmo
         if self.debug == True:
             # means that I am in debug mode and do not want to send the message
             print("[Fake]: " + message)
@@ -153,8 +148,6 @@ class ElmoServer:
             self.elmoSocket.close()
             return 
         return
-        # close all
-    
 
     def playSound(self, sound):
         data = self.sendMessage(f"sound::{sound}")
@@ -198,7 +191,6 @@ class ElmoServer:
 
 
     def toggleBehaviour(self):
-        # self.sendRequestCommand("disable_behaviour", name=name)
         self.activeBehaviour = not self.activeBehaviour
         self.sendRequestCommand("enable_behaviour", name="look_around", control=self.activeBehaviour)
         print("Behaviour: ", self.activeBehaviour)
@@ -214,12 +206,4 @@ class ElmoServer:
                 self.on_error(res["message"])
         except Exception as e:
             print(e)
-
-
-if __name__=='__main__':
-
-    elmoIp = "192.168.0.101"
-    elmoPort = 4000
-    clientIp = "192.168.0.102"
-
-    myElmo = ElmoServer(elmoIp, elmoPort, clientIp)
+            
