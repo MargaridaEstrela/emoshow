@@ -13,7 +13,10 @@ class ElmoServer:
         self.elmoPort = elmoPort
         self.clientIp = clientIp
 
-        # set the motors and behaviour to false
+        self.default_pan = 0
+        self.default_tilt = 0
+
+        # Set the motors and behaviour to false
         self.activeBehaviour = False
         self.activeMotors = False
         self.sendRequestCommand("enable_behaviour", name="look_around", control=False)
@@ -30,20 +33,18 @@ class ElmoServer:
         self.sendMessage("image::normal")
         self.sendMessage("icon::elmo_idm.png") 
     
-
     def connectElmo(self):
         # this will start the socket used to communicate with elmo
         self.elmoSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.elmoSocket.bind((self.clientIp,self.elmoPort))
         print("Successful connection!")
 
-
     def sendMessage(self, message):
         # this will send a message to elmo
         if self.debug == True:
             # means that I am in debug mode and do not want to send the message
-            print("[Fake]: " + message)
-            return "fake"
+            print("[DEBUG]: " + message)
+            return "debug"
             
         print("Sending message: " + message)
         self.elmoSocket.sendto(message.encode('utf-8'), (self.elmoIp, self.elmoPort))
@@ -52,46 +53,39 @@ class ElmoServer:
         print("  Received from server: " + data)
         return data
     
-
     def getImageList(self):
         # this will grab the list of images from elmo
         data = self.sendMessage("getImage::none")
         self.imageList = eval(data)
         return self.imageList
 
-
     def setImage(self, image_name):
         # this will set the image on elmo
         data = self.sendMessage(f"image::{image_name}")
 
+    def setDefaultPan(self, default_pan):
+        self.default_pan = default_pan
+
+    def setDefaultTilt(self, default_tilt):
+        self.default_tilt = default_tilt
 
     def movePan(self, angle):
         # this will move elmo's pan
         data = self.sendMessage(f"pan::{angle}")
 
-
     def moveTilt(self, angle):
         # this will move elmo's tilt
         data = self.sendMessage(f"tilt::{angle}")
 
-
-    def moveLeft(self, default_pan, default_tilt):
+    def moveLeft(self):
         # this will move elmo left
-        default_pan = -default_pan
-        data = self.sendMessage(f"pan::{default_pan}")
-        data = self.sendMessage(f"tilt::{default_tilt}")
+        pan = -self.default_pan
+        data = self.sendMessage(f"pan::{pan}")
+        data = self.sendMessage(f"tilt::{self.default_tilt}")
 
-
-    def moveRight(self, default_pan, default_tilt):
-        # this will move elmo left
-        data = self.sendMessage(f"pan::{default_pan}")
-        data = self.sendMessage(f"tilt::{default_tilt}")
-        
-
-    def moveNext(self, default_pan, default_tilt):
-        data = self.sendMessage(f"pan::{default_pan}")
-        data = self.sendMessage(f"tilt::{default_tilt}") 
-
+    def moveRight(self):
+        data = self.sendMessage(f"pan::{self.default_pan}")
+        data = self.sendMessage(f"tilt::{self.default_tilt}")
 
     def grabImage(self):
         # grab the image from the camera
@@ -118,22 +112,18 @@ class ElmoServer:
                 return frame
         return np.full((480, 640, 3), 26, dtype=np.uint8)
 
-
     def introduceGame(self):
         data = self.sendMessage("sound::introGame.wav")
 
     def playGame(self):
         # this will start the game
         data = self.sendMessage("game::on")
-    
 
     def sayEmotion(self, emotion):
         data = self.sendMessage(f"sound::{emotion}.wav")
 
-
     def endGame(self):
         data = self.sendMessage("sound::end_game.wav")
-
 
     def congratsWinner(self):
         data = self.sendMessage("sound::winner.wav")
@@ -152,7 +142,6 @@ class ElmoServer:
     def playSound(self, sound):
         data = self.sendMessage(f"sound::{sound}")
 
-
     def takePicture(self):
         data = self.sendMessage("sound::takePicture.wav")
 
@@ -170,7 +159,6 @@ class ElmoServer:
 
         return self.grabImage()
 
-
     def analysePicture(self, frame, emotion):
         try:
             face_analysis = DeepFace.analyze(frame)
@@ -180,7 +168,6 @@ class ElmoServer:
         print(face_analysis[0]["emotion"][emotion])
         return face_analysis[0]["emotion"][emotion]
 
-
     def toggleMotors(self):
         # this will enable elmo's motors
         data = self.sendMessage("motors::enable")
@@ -189,13 +176,11 @@ class ElmoServer:
         self.sendRequestCommand("set_tilt_torque", control=self.activeMotors)
         self.sendRequestCommand("set_pan_torque", control=self.activeMotors)
 
-
     def toggleBehaviour(self):
         self.activeBehaviour = not self.activeBehaviour
         self.sendRequestCommand("enable_behaviour", name="look_around", control=self.activeBehaviour)
         print("Behaviour: ", self.activeBehaviour)
     
-
     def sendRequestCommand(self, command, **kwargs):
         try:
             url = "http://" + self.elmoIp + ":8001/command"
@@ -206,4 +191,3 @@ class ElmoServer:
                 self.on_error(res["message"])
         except Exception as e:
             print(e)
-            

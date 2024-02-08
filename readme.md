@@ -362,20 +362,20 @@ Here's how to get play:
 3. **Choose a Port:** Default port is 4000.
 
 4. **Execution:** We establish a connection between the robot and the computer using sockets, allowing us to send commands to the robot during the game.
-    - **On the Robot:** Run ```python3 src/simon_says.py```
+    - **On the Robot:** Run ```python3 src/simon_says_handler.py```
 
        - This module parses all commands requested to the robot during the game. 
 
-    - **On Your Computer:** Launch the GUI with  ```python3 src/wozGui.py [ElmoIP] [ElmoPort] [YourIP]```
+    - **On Your Computer:** Launch the GUI with  ```python3 src/interface.py [ElmoIP] [ElmoPort] [YourIP]```
         - `[ElmoIP]` -> the robot's IP address.
         - `[ElmoPort]` -> the chosen port.
         - `[YourIP]` -> your computer's IP address.
-        - For a debug session, launch the GUI without arguments (```python3 src/wozGui.py```).
+        - For a debug session, launch the GUI without arguments (```python3 src/interface.py```).
 
 
-### WoZ GUI configuration 
+### Interface configuration 
 
-- Set a positive pan value and ensure it's default.
+- Set a positive pan and tilt values.
 - Enable "Toggle Motors" and disable "Toggle Behaviour" 
 
 ### User Study Demo

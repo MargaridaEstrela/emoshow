@@ -1,101 +1,132 @@
-#! /usr/bin/env python
-import middleware as mw
-import socket
-import os
+import threading
+import random
+import time
 
-myPan = mw.Pan()
-myTilt = mw.Tilt()
-myOnboard = mw.Onboard()
-mySpeakers = mw.Speakers()
-myLeds = mw.Leds()
-myServer = mw.Server()
+# List of emotions to analyse
+emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise"]
 
-myPan.enable = True
-myTilt.enable = True
+# Feedback reactions
+bad_face = ["cry", "confused", "anger"]  # the list of faces containing the necessary sounds for the bad button
+good_face = ["normal", "rolling_eyes", "thinking"]  # the list of faces containing the necessary faces for the good button
+awesome_face = ["lovely", "images/simon_images/stars.gif", "blush"]  # the list of faces containing the necessary faces for the awesome button
 
-image_path = "images/simon_images/"
-sound_path = "simon_sounds/"
-icon_path = "simons_icons/"
+# Feedback sounds for each reaction
+feedback_sounds = {"cry": "cry.wav", 
+                   "confused": "confused.wav", 
+                   "anger": "anger.wav", 
+                   "normal": "normal.wav", 
+                   "rolling_eyes": "rolling_eyes.wav", 
+                   "thinking": "thinking.wav", 
+                   "lovely": "lovely.wav", 
+                   "images/simon_images/stars.gif": "stars.wav", 
+                   "blush": "blush.wav"}
 
-def parseMessage(message):
+class SimonSays:
 
-    mw.Pan.enable = True
-    mw.Tilt.enable = True
-    splitMessage = message.split("::")
+    def __init__(self, elmo):
+        self.elmo = elmo
+        self.move = 0
+        self.player = 1
+        self.points = {"1": 0, "2": 0} # points of each player
+        self.status = 0 # 0: reset, 1: playing, 2: end game
+        self.attention = 0 # 0: both players receive feedback, 1: just player 1 receive feedback
 
-    if len(splitMessage) != 2:
-        print("Invalid message")
+        # Game thread
+        self.game_thread = None
+        self.restart_flag = False
 
-    command = splitMessage[0]
-    value = splitMessage[1]
+    def setStatus(self, status):
+        self.status = status
 
-    if command == "pan":
-       print("[PAN] setting...")
-       myPan.angle = int(value)
-       print("[PAN] value: ", value)
+    def setAttention(self):
+        self.attention = not self.attention
 
-    elif command == "tilt":
-        print("[TILT] setting...")
-        myTilt.angle = int(value)
-        print("[TILT] value: ", value)
+    def getAttention(self):
+        return self.attention
 
-    elif command == "image":
-        print("[IMAGE] setting...")
-        if "simon_images" in value:
-            image_src = value
+    def change_player(self):
+        self.player = self.move % 2 + 1
+        if (self.player == 1):
+            self.elmo.moveLeft()
         else:
-            image_src = os.path.join(image_path, f"{value}.png")
-        myOnboard.image = image_src      
-        print("[IMAGE] src: ", image_src)
+            self.elmo.moveRight()
 
-    elif command == "getImage":
-        print("Getting all images...")
-        # returns the path to the images
-        # get a list of all the images in the folder
-        images = [os.path.join("images/simon_images", x) for x in os.listdir("static/images/simon_images")]
-        return images
+    def analyse_emotion(self):
+        frame = self.elmo.takePicture()
+        emotion = emotions[self.move]
+        accuracy = self.elmo.analysePicture(frame, emotion)
+        accuracy = round(accuracy) if accuracy else 0
 
-    elif command == "sound":
-        print("[SOUND] setting...")
-        sound_src = os.path.join(sound_path, f"{value}")
-        sound_url = myServer.url_for_sound(sound_src)
-        mySpeakers.url =  sound_url    
-        print("[SOUND] src: ", sound_src)
+        return accuracy
+    
+    def give_feedback(self, accuracy):
+        if accuracy < 50:
+            face = random.choice(bad_face)
+        elif accuracy < 80:
+            face = random.choice(good_face)
+        else:
+            face = random.choice(awesome_face)
 
-    elif command == "icon":
-        print("[ICON] setting...")
-        icon_src = os.path.join(icon_path, f"{value}")
-        icon_url = myServer.url_for_icon(icon_src)
-        myLeds.load_from_url(icon_url)
-        print("[ICON] src: ", icon_url)
+        self.elmo.setImage(face)
+        self.elmo.playSound(feedback_sounds[face])
 
-    elif command == "game":
-        if value == "on":
-            print("[GAME] starting...")
-        elif value == "off":
-            print("[GAME] ending...")
-            s.close()
-            exit()
+    def player_move(self):
+        global status
+
+        if move > len(emotions):
+            self.elmo.movePan(0)
+            self.elmo.endGame()
+            status = 2 # end game
         
+        else:
+            self.change_player()
 
-if __name__=='__main__':
+            time.sleep(3)
 
-    print("Starting connection...")
-    elmo_ip = '192.168.0.101' #Server ip
-    port = 4000
+            emotion = emotions[move]
+            self.elmo.sayEmotion(emotion)
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((elmo_ip, port))
+            time.sleep(2)
 
+            accuracy = self.analyse_emotion()
 
-    print("Server Started")
-    while True:
-        data, addr = s.recvfrom(1024)
-        data = data.decode('utf-8')
-        print("Message from: " + str(addr))
-        print("From connected user: " + data)
+            if self.player == 1 or (self.player == 2 and self.attention):
+                self.give_feedback(accuracy)
 
-        returnMsg = parseMessage(data)
+            move += 1
 
-        print("Sending: " + data)
-        s.sendto(str(returnMsg).encode('utf-8'), addr)
+    def play_game(self):
+        self.elmo.movePan(0) # look to the center
+        self.elmo.introduceGame()
+        self.elmo.playGame() # log message to start the game
+    
+        while self.status == 1 and not self.restart_flag:
+            self.player_move()
+            time.sleep(2)
+
+        if self.status == 2:
+            self.elmo.movePan(0) # look to the center
+            self.elmo.endGame()
+
+            # select winner and congrats
+            winner = max(self.points, key=self.points.get)
+            if winner == "1":
+                self.elmo.moveLeft()
+            else:
+                self.elmo.moveRight()
+            
+            time.sleep(2)
+            self.elmo.congratsWinner()
+
+        if self.restart_flag:
+            self.restart_flag = False
+            return  # Exit the function if restart flag is set
+
+    def stop_game(self):
+        self.restart_flag = True
+
+    def restart_game(self):
+        self.move = 0
+        self.player = 1
+        self.points = {"1": 0, "2": 0}
+        self.status = 0
