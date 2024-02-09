@@ -63,6 +63,12 @@ class ElmoServer:
         # this will set the image on elmo
         data = self.sendMessage(f"image::{image_name}")
 
+    def increaseVolume(self):
+        data = self.sendMessage("speakers::increaseVolume")
+
+    def decreaseVolume(self):
+        data = self.sendMessage("speakers::decreaseVolume")
+
     def setDefaultPan(self, default_pan):
         self.default_pan = default_pan
 

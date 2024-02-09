@@ -16,10 +16,10 @@ def create_layout():
     sg.theme('LightBlue3')
 
     layout = [   
-        [sg.Text('', size=(1, 1)), sg.Text('ELMO', size=(5, 1))],
-        [sg.Text('', size=(1, 1)),sg.Button("Toggle Behaviour", size=(15, 1), button_color=('white', 'red')), sg.Button("Toggle Motors", size=(15, 1), button_color=('white', 'red')), sg.Text("", size=(30, 1)), sg.Button("Player 1", size=(15, 1)), sg.Text("", size=(1, 1)), sg.Text("0", key="player1_points", size=(10, 1))],
-        [sg.Text('', size=(1, 1)),sg.Text("Pan", size=(3, 1)), sg.InputText(key="pan_value", size=(18, 1)), sg.Button("Set", key="SetPan", size=(8, 1)), sg.Text('', size=(30, 1)), sg.Button("Player 2", size=(15, 1)), sg.Text("", size=(1, 1)), sg.Text("0", key="player2_points", size=(10, 1))],
-        [sg.Text('', size=(1, 1)),sg.Text("Tilt", size=(3, 1)), sg.InputText(key="tilt_value", size=(18, 1)), sg.Button("Set", key="SetTilt", size=(8, 1)),  sg.Text('', size=(30, 1)), sg.Button("Full Attention", size=(15, 1), button_color=('white', 'green'))],
+        [sg.Text('', size=(1, 1))],
+        [sg.Text('', size=(1, 1)),sg.Button("Toggle Behaviour", size=(15, 1), button_color=('white', 'red')), sg.Button("Toggle Motors", size=(15, 1), button_color=('white', 'red')), sg.Text("", size=(10, 1)), sg.Text("Speakers", size=(10, 1)), sg.Text("", size=(6, 1)), sg.Button("Player 1", size=(15, 1)), sg.Text("", size=(1, 1)), sg.Text("0", key="player1_points", size=(10, 1))],
+        [sg.Text('', size=(1, 1)),sg.Text("Pan", size=(3, 1)), sg.InputText(key="pan_value", size=(18, 1)), sg.Button("Set", key="SetPan", size=(8, 1)), sg.Text("", size=(10, 1)), sg.Button("⬆", size=(5, 1)), sg.Text('', size=(10, 1)), sg.Button("Player 2", size=(15, 1)), sg.Text("", size=(1, 1)), sg.Text("0", key="player2_points", size=(10, 1))],
+        [sg.Text('', size=(1, 1)),sg.Text("Tilt", size=(3, 1)), sg.InputText(key="tilt_value", size=(18, 1)), sg.Button("Set", key="SetTilt", size=(8, 1)),  sg.Text("", size=(10, 1)), sg.Button("⬇", size=(5, 1)), sg.Text('', size=(10, 1)), sg.Button("Full Attention", size=(15, 1), button_color=('white', 'green'))],
         [sg.Text('', size=(1, 2))], 
         [sg.Text('', size=(1, 1)), sg.Button("Play", size=(24, 1)), sg.Text('', size=(5, 1)), sg.Button("Restart", size=(24, 1)), sg.Text('', size=(5, 1)), sg.Button("Close All", size=(24, 1))],
         [sg.Text('', size=(1, 1))], 
@@ -69,6 +69,12 @@ def handle_events():
             elmo.moveTilt(value)
             default_tilt = int(value)
             elmo.setDefaultTilt(default_tilt)
+
+    if event == "⬆":
+        elmo.increaseVolume()
+    
+    if event == "⬇":
+        elmo.decreaseVolume()
 
     if event == "Player1":
         print("Looking at player 1")

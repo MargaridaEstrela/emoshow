@@ -54,6 +54,15 @@ def parseMessage(message):
         # get a list of all the images in the folder
         images = [os.path.join("images/simon_images", x) for x in os.listdir("static/images/simon_images")]
         return images
+    
+    elif command == "speakers":
+        if value == "increaseVolume":
+            print("[SPEAKERS] increasing volume...")
+            mySpeakers.volume += 10
+        elif value == "decreaseVolume":
+            print("[SPEAKERS] decreasing volume...")
+            mySpeakers.volume -= 10
+        print("[SPEAKERS] volume: ", mySpeakers.volume)
 
     elif command == "sound":
         print("[SOUND] setting...")
