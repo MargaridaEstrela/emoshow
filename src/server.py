@@ -8,12 +8,13 @@ import cv2
 
 class ElmoServer:
 
-    def __init__(self, elmoIp, elmoPort, clientIp, debug=False, connect_mode=False):
+    def __init__(self, elmoIp, elmoPort, clientIp, logger, debug=False, connect_mode=False):
         self.elmoIp = elmoIp
         self.elmoPort = elmoPort
         self.clientIp = clientIp
 
         self.connect_mode = connect_mode
+        self.logger = logger
 
         self.default_pan = 0
         self.default_tilt = 0
@@ -43,6 +44,8 @@ class ElmoServer:
         print("Successful connection!")
 
     def sendMessage(self, message):
+        # log message
+        self.logger.log_message(message)
         # this will send a message to elmo
         if self.debug == True:
             # means that I am in debug mode and do not want to send the message

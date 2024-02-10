@@ -1,5 +1,6 @@
-from server import ElmoServer
+from simon_says_logger import SimonSaysLogger
 from simon_says import SimonSays
+from server import ElmoServer
 
 import PySimpleGUI as sg
 import threading
@@ -11,6 +12,7 @@ elmoIp = None
 window = None
 simonSays = None
 debug_mode = False
+logger = None
 
 def createLayout():
 
@@ -113,10 +115,11 @@ def handleEvents():
     if event == sg.WIN_CLOSED or event == "Close All": # if user closes window or clicks cancel
         print("Closing all...")
         elmo.closeAll()
+        logger.close()
         window.close()
 
 def main():
-    global elmo, elmoIp, window, simonSays, debug_mode
+    global elmo, elmoIp, window, simonSays, debug_mode, logger
 
     # Parse arguments
     if len(sys.argv) == 1:
@@ -138,8 +141,11 @@ def main():
         print("Usage: python3 interface.py <elmoIp> <elmoPort> <clientIp>")
         return
 
+    # Start logger
+    logger = SimonSaysLogger()
+
     # Start server
-    elmo = ElmoServer(elmoIp, int(elmoPort), clientIp, debug_mode, connect_mode)
+    elmo = ElmoServer(elmoIp, int(elmoPort), clientIp, logger, debug_mode, connect_mode)
 
     # Start Simon Says game
     simonSays = SimonSays(elmo) # default: equal attention
