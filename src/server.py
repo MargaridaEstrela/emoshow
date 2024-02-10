@@ -8,10 +8,12 @@ import cv2
 
 class ElmoServer:
 
-    def __init__(self, elmoIp, elmoPort, clientIp, debug=False):
+    def __init__(self, elmoIp, elmoPort, clientIp, debug=False, connect_mode=False):
         self.elmoIp = elmoIp
         self.elmoPort = elmoPort
         self.clientIp = clientIp
+
+        self.connect_mode = connect_mode
 
         self.default_pan = 0
         self.default_tilt = 0
@@ -19,11 +21,12 @@ class ElmoServer:
         # Set the motors and behaviour to false
         self.activeBehaviour = False
         self.activeMotors = False
+        
         self.sendRequestCommand("enable_behaviour", name="look_around", control=False)
         self.sendRequestCommand("set_tilt_torque", control=False)
         self.sendRequestCommand("set_pan_torque", control=False)
 
-        if debug == False:
+        if not debug:
             self.connectElmo()
             self.debug = False
         else:
@@ -50,7 +53,7 @@ class ElmoServer:
         self.elmoSocket.sendto(message.encode('utf-8'), (self.elmoIp, self.elmoPort))
         data, addr = self.elmoSocket.recvfrom(1024)     # wait for the response from elmo
         data = data.decode('utf-8')
-        print("  Received from server: " + data)
+        print("Received from server: " + data)
         return data
     
     def getImageList(self):
@@ -61,13 +64,13 @@ class ElmoServer:
 
     def setImage(self, image_name):
         # this will set the image on elmo
-        data = self.sendMessage(f"image::{image_name}")
+        self.sendMessage(f"image::{image_name}")
 
     def increaseVolume(self):
-        data = self.sendMessage("speakers::increaseVolume")
+        self.sendMessage("speakers::increaseVolume")
 
     def decreaseVolume(self):
-        data = self.sendMessage("speakers::decreaseVolume")
+        self.sendMessage("speakers::decreaseVolume")
 
     def setDefaultPan(self, default_pan):
         self.default_pan = default_pan
@@ -86,16 +89,16 @@ class ElmoServer:
     def moveLeft(self):
         # this will move elmo left
         pan = -self.default_pan
-        data = self.sendMessage(f"pan::{pan}")
-        data = self.sendMessage(f"tilt::{self.default_tilt}")
+        self.sendMessage(f"pan::{pan}")
+        self.sendMessage(f"tilt::{self.default_tilt}")
 
     def moveRight(self):
-        data = self.sendMessage(f"pan::{self.default_pan}")
-        data = self.sendMessage(f"tilt::{self.default_tilt}")
+        self.sendMessage(f"pan::{self.default_pan}")
+        self.sendMessage(f"tilt::{self.default_tilt}")
 
     def grabImage(self):
         # grab the image from the camera
-        if self.debug == False:
+        if not self.connect_mode:
             url = f"http://{self.elmoIp}:8080/stream.mjpg"
             response = requests.get(url, stream=True)
 
@@ -116,27 +119,27 @@ class ElmoServer:
                 # resize the image to 480, 640
                 frame = cv2.resize(frame, (640, 480))
                 return frame
+            
         return np.full((480, 640, 3), 26, dtype=np.uint8)
 
     def introduceGame(self):
-        data = self.sendMessage("sound::introGame.wav")
+        self.sendMessage("sound::introGame.wav")
 
     def playGame(self):
-        # this will start the game
-        data = self.sendMessage("game::on")
+        self.sendMessage("game::on")
 
     def sayEmotion(self, emotion):
-        data = self.sendMessage(f"sound::{emotion}.wav")
+        self.sendMessage(f"sound::{emotion}.wav")
 
     def endGame(self):
-        data = self.sendMessage("sound::end_game.wav")
+        self.sendMessage("sound::end_game.wav")
 
     def congratsWinner(self):
-        data = self.sendMessage("sound::winner.wav")
+        self.sendMessage("sound::winner.wav")
 
     def closeAll(self):
         # this will end the game
-        data = self.sendMessage("game::off")
+        self.sendMessage("game::off")
 
         time.sleep(1)
         if self.debug == False:
@@ -146,22 +149,22 @@ class ElmoServer:
         return
 
     def playSound(self, sound):
-        data = self.sendMessage(f"sound::{sound}")
+        self.sendMessage(f"sound::{sound}")
 
     def takePicture(self):
-        data = self.sendMessage("sound::takePicture.wav")
+        self.sendMessage("sound::takePicture.wav")
 
         # show 3, 2, 1 and take a picture
-        data = self.sendMessage("icon::3.jpeg")
+        self.sendMessage("icon::3.jpeg")
         time.sleep(1)
 
-        data = self.sendMessage("icon::2.jpeg")
+        self.sendMessage("icon::2.jpeg")
         time.sleep(0.5)
 
-        data = self.sendMessage("icon::1.jpeg")
+        self.sendMessage("icon::1.jpeg")
         time.sleep(0.7)
 
-        data = self.sendMessage("icon::camera.jpeg")
+        self.sendMessage("icon::camera.jpeg")
 
         return self.grabImage()
 
@@ -176,24 +179,25 @@ class ElmoServer:
 
     def toggleMotors(self):
         # this will enable elmo's motors
-        data = self.sendMessage("motors::enable")
         self.activeMotors = not self.activeMotors
-        print("Motors: ", self.activeMotors)
+        self.sendMessage(f"motors::{self.activeMotors}")
         self.sendRequestCommand("set_tilt_torque", control=self.activeMotors)
         self.sendRequestCommand("set_pan_torque", control=self.activeMotors)
 
     def toggleBehaviour(self):
         self.activeBehaviour = not self.activeBehaviour
+        self.sendMessage(f"behaviour::{self.activeBehaviour}") 
         self.sendRequestCommand("enable_behaviour", name="look_around", control=self.activeBehaviour)
         print("Behaviour: ", self.activeBehaviour)
     
     def sendRequestCommand(self, command, **kwargs):
-        try:
-            url = "http://" + self.elmoIp + ":8001/command"
-            kwargs["op"] = command
-            print(kwargs)
-            res = requests.post(url, json=kwargs, timeout=1).json()
-            if not res["success"]:
-                self.on_error(res["message"])
-        except Exception as e:
-            print(e)
+        if not self.connect_mode:
+            try:
+                url = "http://" + self.elmoIp + ":8001/command"
+                kwargs["op"] = command
+                print(kwargs)
+                res = requests.post(url, json=kwargs, timeout=1).json()
+                if not res["success"]:
+                    self.on_error(res["message"])
+            except Exception as e:
+                print(e)

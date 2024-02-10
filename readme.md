@@ -370,8 +370,8 @@ Here's how to get play:
         - `[ElmoIP]` -> the robot's IP address.
         - `[ElmoPort]` -> the chosen port.
         - `[YourIP]` -> your computer's IP address.
-        - For a debug session, launch the GUI without arguments (```python3 src/interface.py```).
-
+        - To launch a debug session using sockets, add the `--connect` flag to the command. 
+        - To launch only the GUI, no arguments are needed (`python3 src/interface.py`).
 
 ### Interface configuration 
 

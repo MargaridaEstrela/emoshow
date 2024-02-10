@@ -29,7 +29,7 @@ class SimonSays:
         self.player = 1
         self.points = {"1": 0, "2": 0} # points of each player
         self.status = 0 # 0: reset, 1: playing, 2: end game
-        self.attention = 0 # 0: both players receive feedback, 1: just player 1 receive feedback
+        self.attention = 1 # 0: just player 1 receive feedback, 1: both players receive feedback
 
         # Game thread
         self.game_thread = None
@@ -40,18 +40,24 @@ class SimonSays:
 
     def setAttention(self):
         self.attention = not self.attention
+        self.elmo.sendMessage(f"attention::{self.attention}")
+
+    def getStatus(self):
+        return self.status
 
     def getAttention(self):
         return self.attention
 
-    def change_player(self):
+    def changePlayer(self):
         self.player = self.move % 2 + 1
+        self.elmo.sendMessage(f"player::{self.player}")
+        self.elmo.sendMessage(f"move::{self.move}") 
         if (self.player == 1):
             self.elmo.moveLeft()
         else:
             self.elmo.moveRight()
 
-    def analyse_emotion(self):
+    def analyseEmotion(self):
         frame = self.elmo.takePicture()
         emotion = emotions[self.move]
         accuracy = self.elmo.analysePicture(frame, emotion)
@@ -59,7 +65,7 @@ class SimonSays:
 
         return accuracy
     
-    def give_feedback(self, accuracy):
+    def giveFeedback(self, accuracy):
         if accuracy < 50:
             face = random.choice(bad_face)
         elif accuracy < 80:
@@ -70,39 +76,42 @@ class SimonSays:
         self.elmo.setImage(face)
         self.elmo.playSound(feedback_sounds[face])
 
-    def player_move(self):
-        global status
-
-        if move > len(emotions):
-            self.elmo.movePan(0)
-            self.elmo.endGame()
-            status = 2 # end game
+    def playerMove(self):
+        if self.move == len(emotions):
+            self.status = 2 # end game
+            self.elmo.sendMessage(f"game::end")
         
         else:
-            self.change_player()
+            self.changePlayer()
 
             time.sleep(3)
 
-            emotion = emotions[move]
+            emotion = emotions[self.move]
             self.elmo.sayEmotion(emotion)
 
             time.sleep(2)
 
-            accuracy = self.analyse_emotion()
+            accuracy = self.analyseEmotion()
+            self.elmo.sendMessage(f"accuracy::{accuracy}")
 
-            if self.player == 1 or (self.player == 2 and self.attention):
-                self.give_feedback(accuracy)
+            time.sleep(1)
 
-            move += 1
+            if self.player == 1 or (self.player == 2 and not self.attention):
+                self.giveFeedback(accuracy)
 
-    def play_game(self):
+            self.move += 1
+
+    def playGame(self):
+        self.elmo.playGame() # log message to start the game
         self.elmo.movePan(0) # look to the center
         self.elmo.introduceGame()
-        self.elmo.playGame() # log message to start the game
-    
+
+        time.sleep(16)
+
         while self.status == 1 and not self.restart_flag:
-            self.player_move()
-            time.sleep(2)
+            self.elmo.sendMessage("game::loop")
+            time.sleep(4)
+            self.playerMove()
 
         if self.status == 2:
             self.elmo.movePan(0) # look to the center
@@ -110,23 +119,26 @@ class SimonSays:
 
             # select winner and congrats
             winner = max(self.points, key=self.points.get)
+            self.elmo.sendMessage(f"winner::{winner}")
             if winner == "1":
                 self.elmo.moveLeft()
             else:
                 self.elmo.moveRight()
             
             time.sleep(2)
+
             self.elmo.congratsWinner()
 
         if self.restart_flag:
             self.restart_flag = False
             return  # Exit the function if restart flag is set
 
-    def stop_game(self):
+    def stopGame(self):
         self.restart_flag = True
 
-    def restart_game(self):
+    def restartGame(self):
         self.move = 0
         self.player = 1
         self.points = {"1": 0, "2": 0}
         self.status = 0
+        self.restart_flag = False 

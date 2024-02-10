@@ -10,8 +10,9 @@ elmo = None
 elmoIp = None
 window = None
 simonSays = None
+debug_mode = False
 
-def create_layout():
+def createLayout():
 
     sg.theme('LightBlue3')
 
@@ -28,15 +29,16 @@ def create_layout():
 
     return layout
 
-def handle_events():
+def handleEvents():
     event, values = window.read(timeout = 1)
 
     print("[EVENT]: ", event, values)
 
-    # lets update the image
-    img = elmo.grabImage()
-    imgbytes = cv2.imencode(".png", img)[1].tobytes()
-    window['image'].update(data=imgbytes)
+    if not debug_mode:
+        # lets update the image
+        img = elmo.grabImage()
+        imgbytes = cv2.imencode(".png", img)[1].tobytes()
+        window['image'].update(data=imgbytes)
 
     if event == "Toggle Behaviour":
         print("Toggling Behaviour")
@@ -76,34 +78,34 @@ def handle_events():
     if event == "⬇":
         elmo.decreaseVolume()
 
-    if event == "Player1":
+    if event == "Player 1":
         print("Looking at player 1")
         elmo.moveLeft()
     
-    if event == "Player2":
+    if event == "Player 2":
         elmo.moveRight()
         print("Looking at player 2")
 
     if event == "Full Attention":
         simonSays.setAttention()
-        if simonSays.getAttention() == 0: # equal attention
+        if simonSays.getAttention() == 1: # equal attention
             window['Full Attention'].update(button_color=('white', 'green'))
         else: # unequal attention
             window['Full Attention'].update(button_color=('white', 'red'))
    
     if event == "Play":
         simonSays.setStatus(1) # playing game
+        elmo.sendMessage(f"status::{simonSays.getStatus()}")
         if simonSays.game_thread is None or not simonSays.game_thread.is_alive():
-            simonSays.game_thread = threading.Thread(target=simonSays.play_game)
+            simonSays.game_thread = threading.Thread(target=simonSays.playGame)
             simonSays.game_thread.start()
 
     if event == "Restart":
-        simonSays.stop_game()
-        simonSays.restart_game()
+        simonSays.stopGame()
+        simonSays.restartGame()
         
         window['player1_points'].update(0)
         window['player2_points'].update(0)
-        window['player_accuracy'].update(0)
         elmo.setImage("normal")
         elmo.sendMessage("icon::elmo_idm.png")
         elmo.movePan(0)
@@ -114,27 +116,36 @@ def handle_events():
         window.close()
 
 def main():
-    global elmo, elmoIp, window, simonSays
+    global elmo, elmoIp, window, simonSays, debug_mode
 
     # Parse arguments
     if len(sys.argv) == 1:
         elmoIp = ""
         elmoPort = 0
         clientIp = ""
-        debug_mode = True  # running in debug mode
+        debug_mode = True  # running in debug mode (just gui)
 
     elif len(sys.argv) == 4:
         elmoIp, elmoPort, clientIp = sys.argv[1:4]
         debug_mode = False
 
+    elif len(sys.argv) == 5:
+        elmoIp, elmoPort, clientIp = sys.argv[1:4]
+        if sys.argv[4] == "--connect":
+            connect_mode = True
+
+    else:
+        print("Usage: python3 interface.py <elmoIp> <elmoPort> <clientIp>")
+        return
+
     # Start server
-    elmo = ElmoServer(elmoIp, int(elmoPort), clientIp, debug_mode)
+    elmo = ElmoServer(elmoIp, int(elmoPort), clientIp, debug_mode, connect_mode)
 
     # Start Simon Says game
     simonSays = SimonSays(elmo) # default: equal attention
 
     # Create window
-    layout = create_layout()
+    layout = createLayout()
 
     # Create the Window
     title = 'Simon Says'
@@ -143,14 +154,15 @@ def main():
 
     print("window created")
 
-    # Initial image update
-    img = elmo.grabImage()
-    imgbytes = cv2.imencode(".png", img)[1].tobytes()
-    window['image'].update(data=imgbytes)
+    if not debug_mode:
+        # Initial image update
+        img = elmo.grabImage()
+        imgbytes = cv2.imencode(".png", img)[1].tobytes()
+        window['image'].update(data=imgbytes)
 
     # Event loop
     while True:
-        handle_events()
-        
+        handleEvents()
+
 if __name__ == "__main__":
     main()

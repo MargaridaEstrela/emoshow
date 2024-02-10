@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 import middleware as mw
 import socket
+import sys
 import os
 
+s = None #socket
 myPan = mw.Pan()
 myTilt = mw.Tilt()
 myOnboard = mw.Onboard()
@@ -10,12 +12,13 @@ mySpeakers = mw.Speakers()
 myLeds = mw.Leds()
 myServer = mw.Server()
 
-myPan.enable = True
-myTilt.enable = True
-
 image_path = "images/simon_images/"
 sound_path = "simon_sounds/"
 icon_path = "simon_icons/"
+
+def enable_torque():
+    myPan.enable = True
+    myTilt.enable = True
 
 def parseMessage(message):
 
@@ -50,8 +53,6 @@ def parseMessage(message):
 
     elif command == "getImage":
         print("Getting all images...")
-        # returns the path to the images
-        # get a list of all the images in the folder
         images = [os.path.join("images/simon_images", x) for x in os.listdir("static/images/simon_images")]
         return images
     
@@ -86,25 +87,45 @@ def parseMessage(message):
             s.close()
             exit()
         
-
-if __name__=='__main__':
+def main():
+    global s
+    # Parse arguments
+    if len(sys.argv) == 3 or len(sys.argv) == 4:
+        elmoIp, port = sys.argv[1:3]
+        debug = False
+    else:
+        print("Usage: python3 simon_says_handler.py <elmoIp> <port> (--debug)")
+        return
+    
+    # Check debug flag
+    if len(sys.argv) == 4:
+        if sys.argv[3] == "--debug":
+            debug = True
+        else:
+            print("Usage: python3 simon_says_handler.py <elmoIp> <port> (--debug)") 
+            return
 
     print("Starting connection...")
-    elmo_ip = '192.168.0.101' #Server ip
-    port = 4000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((elmo_ip, port))
-
+    s.bind((elmoIp, int(port)))
 
     print("Server Started")
+
+    if not debug:
+        enable_torque()
+
     while True:
         data, addr = s.recvfrom(1024)
         data = data.decode('utf-8')
         print("Message from: " + str(addr))
         print("From connected user: " + data)
 
-        returnMsg = parseMessage(data)
-
+        if not debug:
+            parseMessage(data)
+            
         print("Sending: " + data)
-        s.sendto(str(returnMsg).encode('utf-8'), addr)
+        s.sendto(str().encode('utf-8'), addr)
+
+if __name__=='__main__':
+    main()
