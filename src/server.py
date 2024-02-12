@@ -116,18 +116,13 @@ class ElmoServer:
 
     def grab_image(self):
         if self.connect_mode:
-            cam = cv2.VideoCapture(0)  # 0 represents the default camera
-
-            # Check if the camera is opened successfully
-            if not cam.isOpened():
-                self.logger.log_error("Could not open camera")
-                return np.full((480, 640, 3), 26, dtype=np.uint8) 
+            cap = cv2.VideoCaptureCAM(0)
 
             # Capture a frame
-            result, frame = cam.read()
+            ret, frame = cap.read()
 
             # Check if the frame is captured successfully
-            if not result:
+            if not ret:
                 self.logger.log_error("Failed to capture frame")
                 return np.full((480, 640, 3), 26, dtype=np.uint8)
             

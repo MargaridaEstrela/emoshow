@@ -10,9 +10,10 @@ import sys
 elmo = None
 elmo_ip = None
 window = None
+logger = None
 simon_says = None
 debug_mode = False
-logger = None
+connect_mode = False
 
 
 def create_layout():
@@ -71,12 +72,10 @@ def create_layout():
 
 
 def handle_events():
+
     event, values = window.read(timeout=1)
 
-    print("[EVENT]: ", event, values)
-
     if not debug_mode:
-        # lets update the image
         img = elmo.grab_image()
         img_bytes = cv2.imencode(".png", img)[1].tobytes()
         window["image"].update(data=img_bytes)
@@ -118,22 +117,20 @@ def handle_events():
         elmo.decrease_volume()
 
     if event == "Player 1":
-        print("Looking at player 1")
         elmo.move_left()
 
     if event == "Player 2":
         elmo.move_right()
-        print("Looking at player 2")
 
     if event == "Full Attention":
         simon_says.toggle_attention()
-        if simon_says.get_attention():  # equal attention
+        if simon_says.get_attention():  # Equal attention
             window["Full Attention"].update(button_color=("white", "green"))
-        else:  # unequal attention
+        else:  # Unequal attention
             window["Full Attention"].update(button_color=("white", "red"))
 
     if event == "Play":
-        simon_says.set_status(1)  # playing game
+        simon_says.set_status(1)  # Playing game
         elmo.send_message(f"status::{simon_says.get_status()}")
         if simon_says.game_thread is None or not simon_says.game_thread.is_alive():
             simon_says.game_thread = threading.Thread(target=simon_says.play_game)
@@ -151,7 +148,7 @@ def handle_events():
 
     if (
         event == sg.WIN_CLOSED or event == "Close All"
-    ):  # if user closes window or clicks cancel
+    ):  # If user closes window or clicks cancel
         print("Closing all...")
         elmo.close_all()
         logger.close()
@@ -166,7 +163,7 @@ def main():
         elmo_ip = ""
         elmo_port = 0
         client_ip = ""
-        debug_mode = True  # running in debug mode (just gui)
+        debug_mode = True  # Running in debug mode (just gui)
 
     elif len(sys.argv) == 4:
         elmo_ip, elmo_port, client_ip = sys.argv[1:4]
@@ -190,18 +187,15 @@ def main():
     )
 
     # Start Simon Says game
-    simon_says = SimonSays(elmo, logger)  # default: equal attention
+    simon_says = SimonSays(elmo, logger)
 
-    # Create window
     layout = create_layout()
 
-    # Create the Window
+    # Create window
     title = "Simon Says"
     if len(elmo_ip) > 0:
         title += "  " + "idmind@" + elmo_ip
     window = sg.Window(title, layout, finalize=True)
-
-    print("window created")
 
     if not debug_mode:
         # Initial image update
