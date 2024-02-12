@@ -1,11 +1,12 @@
-from simon_says_logger import SimonSaysLogger
-from simon_says import SimonSays
-from server import ElmoServer
-
-import PySimpleGUI as sg
-import threading
-import cv2
 import sys
+import threading
+
+import cv2
+import PySimpleGUI as sg
+
+from server import ElmoServer
+from simon_says import SimonSays
+from simon_says_logger import SimonSaysLogger
 
 elmo = None
 elmo_ip = None
@@ -17,6 +18,12 @@ connect_mode = False
 
 
 def create_layout():
+    """
+    Creates the layout for the Simon Says game interface.
+
+    Returns:
+        list: The layout of the interface as a list of elements.
+    """
 
     sg.theme("LightBlue3")
 
@@ -72,7 +79,16 @@ def create_layout():
 
 
 def handle_events():
+    """
+    Handle events from the GUI window.
 
+    This function reads events from the GUI window and performs corresponding
+    actions based on the event type.
+    It updates the image displayed in the window, toggles Elmo's behavior and
+    motors, sets the pan and tilt values, adjusts the volume, moves Elmo left or
+    right, toggles full attention mode, starts or restarts the game, and handles
+    window close event.
+    """
     event, values = window.read(timeout=1)
 
     if not debug_mode:
@@ -82,7 +98,7 @@ def handle_events():
 
     if event == "Toggle Behaviour":
         elmo.toggle_behaviour()
-        # change the color of the button
+        # Change the color of the button
         if elmo.get_control_behaviour():
             window["Toggle Behaviour"].update(button_color=("white", "green"))
         else:
@@ -124,6 +140,7 @@ def handle_events():
 
     if event == "Full Attention":
         simon_says.toggle_attention()
+        # Change the color of the button
         if simon_says.get_attention():  # Equal attention
             window["Full Attention"].update(button_color=("white", "green"))
         else:  # Unequal attention
@@ -156,7 +173,13 @@ def handle_events():
 
 
 def main():
-    global elmo, elmo_ip, window, simon_says, debug_mode, logger
+    """
+    The main function of the Simon Says game interface.
+
+    This function parses command line arguments, initializes the logger, starts the server,
+    creates the game window, and enters the event loop to handle user interactions.
+    """
+    global elmo, elmo_ip, window, simon_says, debug_mode, connect_mode, logger
 
     # Parse arguments
     if len(sys.argv) == 1:

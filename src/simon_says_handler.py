@@ -1,10 +1,11 @@
 #! /usr/bin/env python
-import middleware as mw
+import os
 import socket
 import sys
-import os
 
-s = None  # socket
+import middleware as mw
+
+s = None  # Socket
 pan = mw.Pan()
 tilt = mw.Tilt()
 onboard = mw.Onboard()
@@ -18,11 +19,21 @@ icon_path = "simon_icons/"
 
 
 def enable_torque():
+    """
+    Enables the torque for the pan and tilt motors.
+    """
     pan.enable = True
     tilt.enable = True
 
 
 def parse_message(message):
+    """
+    Parses the given message and performs the corresponding actions based on the
+    command and value.
+
+    Args:
+        message (str): The message to be parsed in the format "command::value".
+    """
     splitMessage = message.split("::")
 
     if len(splitMessage) != 2:
@@ -49,14 +60,6 @@ def parse_message(message):
             image_src = os.path.join(image_path, f"{value}.png")
         onboard.image = image_src
         print("[IMAGE] src: ", image_src)
-
-    elif command == "getImage":
-        print("Getting all images...")
-        images = [
-            os.path.join("images/simon_images", x)
-            for x in os.listdir("static/images/simon_images")
-        ]
-        return images
 
     elif command == "speakers":
         if value == "increaseVolume":
@@ -91,6 +94,12 @@ def parse_message(message):
 
 
 def main():
+    """
+    Entry point of the Simon Says handler program.
+    Parses command line arguments, establishes a connection, and handles
+    incoming messages.
+    """
+
     global s
     # Parse arguments
     if len(sys.argv) == 3 or len(sys.argv) == 4:
@@ -126,6 +135,7 @@ def main():
 
         if not debug:
             parse_message(data)
+
 
 if __name__ == "__main__":
     main()
