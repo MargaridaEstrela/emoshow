@@ -38,13 +38,15 @@ feedback_sounds = {
 
 class SimonSays:
 
-    def __init__(self, elmo):
+    def __init__(self, elmo, logger):
         self.elmo = elmo  # Elmo robot
         self.move = 0  # Current move
         self.player = 1  # Current player
         self.points = {"1": 0, "2": 0}  # Points of each player
         self.status = 0  # 0: reset, 1: playing, 2: end game
         self.attention = 1  # 0: unequal attention, 1: equal attention
+
+        self.logger = logger
 
         # Game thread
         self.game_thread = None

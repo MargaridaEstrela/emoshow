@@ -190,7 +190,7 @@ def main():
     )
 
     # Start Simon Says game
-    simon_says = SimonSays(elmo)  # default: equal attention
+    simon_says = SimonSays(elmo, logger)  # default: equal attention
 
     # Create window
     layout = create_layout()

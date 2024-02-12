@@ -115,7 +115,23 @@ class ElmoServer:
         self.send_message("speakers::decreaseVolume")
 
     def grab_image(self):
-        if not self.connect_mode:
+        if self.connect_mode:
+            cam = cv2.VideoCapture(0)  # 0 represents the default camera
+
+            # Check if the camera is opened successfully
+            if not cam.isOpened():
+                self.logger.log_error("Could not open camera")
+                return np.full((480, 640, 3), 26, dtype=np.uint8) 
+
+            # Capture a frame
+            result, frame = cam.read()
+
+            # Check if the frame is captured successfully
+            if not result:
+                self.logger.log_error("Failed to capture frame")
+                return np.full((480, 640, 3), 26, dtype=np.uint8)
+            
+        else:
             url = f"http://{self.elmoIp}:8080/stream.mjpg"
             response = requests.get(url, stream=True)
 
@@ -134,11 +150,9 @@ class ElmoServer:
                         )
                         break
 
-                # Resize the image to 480x640
-                frame = cv2.resize(frame, (640, 480))
-                return frame
-            
-        return np.full((480, 640, 3), 26, dtype=np.uint8)
+        # Resize the image to 480x640
+        frame = cv2.resize(frame, (640, 480))
+        return frame
 
     def set_image(self, image_name):
         self.send_message(f"image::{image_name}")
