@@ -362,7 +362,7 @@ Here's how to get play:
 3. **Choose a Port:** Default port is 4000.
 
 4. **Execution:** We establish a connection between the robot and the computer using sockets, allowing us to send commands to the robot during the game.
-    - **On the Robot:** Run ```python3 src/simon_says_handler.py```
+    - **On the Robot:** Run ```python3 src/simon_says_handler.py [ElmoIP] [ElmoPort]```
 
        - This module parses all commands requested to the robot during the game. 
 
