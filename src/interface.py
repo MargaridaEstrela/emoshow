@@ -32,13 +32,11 @@ def create_layout():
         [
             sg.Text("", size=(1, 1)),
             sg.Button("Toggle Behaviour", size=(15, 1), button_color=("white", "red")),
-            sg.Button("Toggle Motors", size=(15, 1), button_color=("white", "red")),
+            sg.Button("Toggle Motors", size=(15, 1), button_color=("white", "green")),
             sg.Text("", size=(10, 1)),
             sg.Text("Speakers", size=(10, 1)),
             sg.Text("", size=(6, 1)),
             sg.Button("Player 1", size=(15, 1)),
-            sg.Text("", size=(1, 1)),
-            sg.Text("0", key="player1_points", size=(10, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
@@ -49,8 +47,6 @@ def create_layout():
             sg.Button("⬆", size=(5, 1)),
             sg.Text("", size=(10, 1)),
             sg.Button("Player 2", size=(15, 1)),
-            sg.Text("", size=(1, 1)),
-            sg.Text("0", key="player2_points", size=(10, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
@@ -156,9 +152,6 @@ def handle_events():
     if event == "Restart":
         simon_says.stop_game()
         simon_says.restart_game()
-
-        window["player1_points"].update(0)
-        window["player2_points"].update(0)
         elmo.set_image("normal")
         elmo.send_message("icon::elmo_idm.png")
         elmo.move_pan(0)

@@ -67,12 +67,12 @@ class ElmoServer:
         self.default_tilt = 0
 
         # For default, motors and behavior are disabled
-        self.control_motors = False
+        self.control_motors = True
         self.control_behaviour = False
 
         self.send_request_command("enable_behaviour", name="look_around", control=False)
-        self.send_request_command("set_tilt_torque", control=False)
-        self.send_request_command("set_pan_torque", control=False)
+        self.send_request_command("set_tilt_torque", control=True)
+        self.send_request_command("set_pan_torque", control=True)
 
         if not debug:
             self.connect_elmo()
@@ -153,7 +153,7 @@ class ElmoServer:
         """
         if not self.connect_mode:
             try:
-                url = "http://" + self.elmoIp + ":8001/command"
+                url = "http://" + self.elmo_ip + ":8001/command"
                 kwargs["op"] = command
                 print(kwargs)
                 res = requests.post(url, json=kwargs, timeout=1).json()
@@ -256,7 +256,7 @@ class ElmoServer:
             cap.release()
 
         else:
-            url = f"http://{self.elmoIp}:8080/stream.mjpg"
+            url = f"http://{self.elmo_ip}:8080/stream.mjpg"
             response = requests.get(url, stream=True)
 
             if response.status_code == 200:  # Is a valid response
@@ -343,13 +343,14 @@ class ElmoServer:
 
         Returns:
             float: The value of the specified emotion in the analysis.
-
         """
         try:
             face_analysis = DeepFace.analyze(frame)
         except Exception as e:
-            self.logger.log_message(e)
+            self.logger.log_error(e)
             return None
+        
+        self.logger.log_message(face_analysis[0])
         return face_analysis[0]["emotion"][emotion]
 
     def play_sound(self, sound):

@@ -147,6 +147,9 @@ class SimonSays:
         accuracy = self.elmo.analyse_picture(frame, emotion)
         accuracy = round(accuracy) if accuracy else 0
 
+        if accuracy == 0:
+            self.logger.log_error("Face not detected")
+
         return accuracy
 
     def give_feedback(self, accuracy):
@@ -170,6 +173,8 @@ class SimonSays:
         """
         Performs a move by the player.
         """
+        self.elmo.send_message("image::normal") # Set default image
+
         if self.move == len(emotions):
             self.status = 2  # End game
             self.elmo.send_message(f"game::end")
@@ -182,15 +187,21 @@ class SimonSays:
 
             self.elmo.say_emotion(emotion)
             self.logger.log_message(f"emotion::{emotion}")
+
             time.sleep(2)
 
             accuracy = self.analyse_emotion()
             self.elmo.send_message(f"accuracy::{accuracy}")
+            self.points[str(self.player)] += accuracy
 
             time.sleep(1)
 
-            if self.player == 1 or (self.player == 2 and not self.attention):
+            self.elmo.send_message("icon::elmo_idm.png")
+
+            if self.player == 1 or (self.player == 2 and self.attention):
                 self.give_feedback(accuracy)
+
+            time.sleep(4) 
 
             self.move += 1
 
@@ -199,23 +210,28 @@ class SimonSays:
         Starts the game.
         """
         self.elmo.play_game()
+        self.elmo.send_message("image::normal")
+        self.elmo.send_message("icon::elmo_idm.png")
         self.elmo.move_pan(0)  # Look in the middle
+        time.sleep(2)
         self.elmo.introduce_game()
 
         time.sleep(16)
 
         while self.status == 1 and not self.restart_flag:
             self.elmo.send_message("game::loop")
-            time.sleep(4)
             self.player_move()
 
         if self.status == 2:
             self.elmo.move_pan(0)  # Look in the middle
             self.elmo.end_game()
 
+            time.sleep(4)
+
             # Select winner and congrats
             winner = max(self.points, key=self.points.get)
-            self.elmo.send_message(f"winner::{winner}")
+            self.logger.log_message(self.points)
+            self.logger.log_message(f"winner::{winner}")
             if winner == "1":
                 self.elmo.move_left()  # Look at player 1
             else:
@@ -224,6 +240,8 @@ class SimonSays:
             time.sleep(2)
 
             self.elmo.congrats_winner()
+
+            time.sleep(4)
 
         if self.restart_flag:
             self.restart_flag = False

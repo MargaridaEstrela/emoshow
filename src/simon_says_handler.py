@@ -58,6 +58,7 @@ def parse_message(message):
             image_src = value
         else:
             image_src = os.path.join(image_path, f"{value}.png")
+            print(image_src)
         onboard.image = image_src
         print("[IMAGE] src: ", image_src)
 
@@ -101,6 +102,7 @@ def main():
     """
 
     global s
+    
     # Parse arguments
     if len(sys.argv) == 3 or len(sys.argv) == 4:
         elmo_ip, elmo_port = sys.argv[1:3]
