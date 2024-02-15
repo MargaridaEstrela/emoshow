@@ -168,6 +168,7 @@ class SimonSays:
 
         self.elmo.set_image(face)
         self.elmo.play_sound(feedback_sounds[face])
+        time.sleep(5)
 
     def player_move(self):
         """
@@ -188,21 +189,20 @@ class SimonSays:
             self.elmo.say_emotion(emotion)
             self.logger.log_message(f"emotion::{emotion}")
 
-            time.sleep(2)
+            time.sleep(1)
 
             accuracy = self.analyse_emotion()
             self.elmo.send_message(f"accuracy::{accuracy}")
             self.points[str(self.player)] += accuracy
 
-            time.sleep(1)
+            time.sleep(2)
 
             self.elmo.send_message("icon::elmo_idm.png")
 
             if self.player == 1 or (self.player == 2 and self.attention):
                 self.give_feedback(accuracy)
 
-            time.sleep(4) 
-
+            time.sleep(2)
             self.move += 1
 
     def play_game(self):
