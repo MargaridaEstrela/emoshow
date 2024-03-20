@@ -240,6 +240,9 @@ class ElmoServer:
         Returns:
             np.ndarray: The captured image.
         """
+        if self.debug:
+            return
+
         if self.connect_mode:
             cap = cv2.VideoCapture(0)
 

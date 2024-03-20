@@ -1,9 +1,8 @@
 import random
-import threading
 import time
 
 # List of emotions to analyse
-emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise"]
+emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
 
 # Feedback reactions
 bad_face = [
@@ -46,6 +45,7 @@ class SimonSays:
         move (int): The current move.
         player (int): The current player.
         points (dict): The points of each player.
+        shuffled_emotions (dict) : The shuffled emotions for each player.
         status (int): The status of the game (0: reset, 1: playing, 2: end game).
         attention (int): The attention mode (0: unequal attention, 1: equal attention).
         game_thread (object): The game thread.
@@ -57,6 +57,7 @@ class SimonSays:
         get_status(): Returns the status of the game.
         get_attention(): Returns the attention mode.
         toggle_attention(): Toggles the attention mode.
+        shuffle_emotions(): Shuffles the emotions for each player.
         change_player(): Changes the current player.
         analyse_emotion(): Analyzes the emotion of the current move.
         give_feedback(accuracy): Gives feedback based on the accuracy of the emotion analysis.
@@ -71,8 +72,9 @@ class SimonSays:
         self.move = 0  # Current move
         self.player = 1  # Current player
         self.points = {"1": 0, "2": 0}  # Points of each player
+        self.shuffled_emotions = {} # Shuffled emotions for each player
         self.status = 0  # 0: reset, 1: playing, 2: end game
-        self.attention = 1  # 0: unequal attention, 1: equal attention
+        self.feedback = True  # Feedback mode
 
         self.logger = logger
 
@@ -89,14 +91,14 @@ class SimonSays:
         """
         self.status = status
 
-    def set_attention(self, attention):
+    def set_feedback(self, feedback):
         """
-        Sets the attention mode.
+        Sets the feedback mode.
 
         Args:
-            attention (int): The attention mode.
+            feedback (boolean): The feedback mode.
         """
-        self.attention = attention
+        self.feedback = feedback
 
     def get_status(self):
         """
@@ -107,21 +109,34 @@ class SimonSays:
         """
         return self.status
 
-    def get_attention(self):
+    def get_feedback(self):
         """
-        Returns the attention mode.
+        Returns the feedback mode.
 
         Returns:
-            int: The attention mode.
+            boolean: The feedback mode.
         """
-        return self.attention
+        return self.feedback
 
-    def toggle_attention(self):
+    def toggle_feedback(self):
         """
-        Toggles the attention mode.
+        Toggles the feedback mode.
         """
-        self.set_attention(not self.attention)
-        self.elmo.send_message(f"attention::{self.attention}")
+        self.set_feedback(not self.feedback)
+        self.elmo.send_message(f"feedback::{self.feedback}")
+
+    def shuffle_emotions(self):
+        """
+        Shuffles the emotions for each player.
+        """
+        self.shuffled_emotions["1"] = emotions.copy()
+        self.shuffled_emotions["2"] = emotions.copy()
+
+        random.shuffle(self.shuffled_emotions["1"])
+        random.shuffle(self.shuffled_emotions["2"])
+
+        self.logger.log_message(f"[EMOTIONS_1]: {self.shuffled_emotions["1"]}")
+        self.logger.log_message(f"[EMOTIONS_2]: {self.shuffled_emotions["2"]}")
 
     def change_player(self):
         """
@@ -176,7 +191,7 @@ class SimonSays:
         """
         self.elmo.send_message("image::normal") # Set default image
 
-        if self.move == len(emotions):
+        if self.move == 2*len(emotions):
             self.status = 2  # End game
             self.elmo.send_message(f"game::end")
         else:
@@ -184,7 +199,7 @@ class SimonSays:
 
             time.sleep(3)
 
-            emotion = emotions[self.move]
+            emotion = self.shuffled_emotions[str(self.player)][self.move]
 
             self.elmo.say_emotion(emotion)
             self.logger.log_message(f"emotion::{emotion}")
@@ -199,7 +214,8 @@ class SimonSays:
 
             self.elmo.send_message("icon::elmo_idm.png")
 
-            if self.player == 1 or (self.player == 2 and self.attention):
+            if self.player == 1 or (self.player == 2 and self.feedback):
+                print("Receive feedback")
                 self.give_feedback(accuracy)
 
             time.sleep(2)
@@ -217,6 +233,8 @@ class SimonSays:
         self.elmo.introduce_game()
 
         time.sleep(16)
+
+        self.shuffle_emotions()
 
         while self.status == 1 and not self.restart_flag:
             self.elmo.send_message("game::loop")
@@ -260,5 +278,6 @@ class SimonSays:
         self.move = 0
         self.player = 1
         self.points = {"1": 0, "2": 0}
+        self.shuffled_emotions = {}
         self.status = 0
         self.restart_flag = False
