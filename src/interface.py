@@ -56,7 +56,7 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Button("⬇", size=(5, 1)),
             sg.Text("", size=(10, 1)),
-            sg.Button("Full Attention", size=(15, 1), button_color=("white", "green")),
+            sg.Button("Feedback", size=(15, 1), button_color=("white", "green")),
         ],
         [sg.Text("", size=(1, 2))],
         [
@@ -82,7 +82,7 @@ def handle_events():
     actions based on the event type.
     It updates the image displayed in the window, toggles Elmo's behavior and
     motors, sets the pan and tilt values, adjusts the volume, moves Elmo left or
-    right, toggles full attention mode, starts or restarts the game, and handles
+    right, toggles feedback mode, starts or restarts the game, and handles
     window close event.
     """
     event, values = window.read(timeout=1)
@@ -134,13 +134,13 @@ def handle_events():
     if event == "Player 2":
         elmo.move_right()
 
-    if event == "Full Attention":
-        simon_says.toggle_attention()
+    if event == "Feedback":
+        simon_says.toggle_feedback()
         # Change the color of the button
-        if simon_says.get_attention():  # Equal attention
-            window["Full Attention"].update(button_color=("white", "green"))
-        else:  # Unequal attention
-            window["Full Attention"].update(button_color=("white", "red"))
+        if simon_says.get_feedback():  # Feedback for both players
+            window["Feedback"].update(button_color=("white", "green"))
+        else:  # Player 2 doesn't receive feedback
+            window["Feedback"].update(button_color=("white", "red"))
 
     if event == "Play":
         simon_says.set_status(1)  # Playing game
