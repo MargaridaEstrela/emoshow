@@ -8,17 +8,17 @@ emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
 bad_face = [
     "cry",
     "confused",
-    "anger",
+    "anger"
 ]
 good_face = [
     "normal",
     "rolling_eyes",
-    "thinking",
+    "thinking"
 ]
 awesome_face = [
     "lovely",
     "images/simon_images/stars.gif",
-    "blush",
+    "blush"
 ]
 
 # Feedback sounds for each reaction
@@ -31,7 +31,7 @@ feedback_sounds = {
     "thinking": "thinking.wav",
     "lovely": "lovely.wav",
     "images/simon_images/stars.gif": "stars.wav",
-    "blush": "blush.wav",
+    "blush": "blush.wav"
 }
 
 
@@ -118,6 +118,16 @@ class SimonSays:
         """
         return self.feedback
 
+    def get_player_move(self):
+        """
+        Returns the current move of the current player.
+
+        Returns:
+            int: The current player move.
+        """
+        player_move = self.move // 2
+        return player_move
+
     def toggle_feedback(self):
         """
         Toggles the feedback mode.
@@ -158,7 +168,8 @@ class SimonSays:
             int: The accuracy of the emotion analysis.
         """
         frame = self.elmo.take_picture()
-        emotion = emotions[self.move]
+        player_move = self.get_player_move();
+        emotion = emotions[player_move]
         accuracy = self.elmo.analyse_picture(frame, emotion)
         accuracy = round(accuracy) if accuracy else 0
 
@@ -199,7 +210,8 @@ class SimonSays:
 
             time.sleep(3)
 
-            emotion = self.shuffled_emotions[str(self.player)][self.move]
+            player_move = self.get_player_move()
+            emotion = self.shuffled_emotions[str(self.player)][player_move]
 
             self.elmo.say_emotion(emotion)
             self.logger.log_message(f"emotion::{emotion}")
@@ -229,7 +241,9 @@ class SimonSays:
         self.elmo.send_message("image::normal")
         self.elmo.send_message("icon::elmo_idm.png")
         self.elmo.move_pan(0)  # Look in the middle
+
         time.sleep(2)
+        
         self.elmo.introduce_game()
 
         time.sleep(16)
