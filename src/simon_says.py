@@ -1,38 +1,13 @@
 import random
 import time
+import cv2
 
 # List of emotions to analyse
 emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
 
-# Feedback reactions
-bad_face = [
-    "cry",
-    "confused",
-    "anger"
-]
-good_face = [
-    "normal",
-    "rolling_eyes",
-    "thinking"
-]
-awesome_face = [
-    "lovely",
-    "images/simon_images/stars.gif",
-    "blush"
-]
-
-# Feedback sounds for each reaction
-feedback_sounds = {
-    "cry": "cry.wav",
-    "confused": "confused.wav",
-    "anger": "anger.wav",
-    "normal": "normal.wav",
-    "rolling_eyes": "rolling_eyes.wav",
-    "thinking": "thinking.wav",
-    "lovely": "lovely.wav",
-    "images/simon_images/stars.gif": "stars.wav",
-    "blush": "blush.wav"
-}
+# Load the Haar Cascade model
+face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 
+                                        "haarcascade_frontalface_default.xml")
 
 
 class SimonSays:
@@ -59,6 +34,7 @@ class SimonSays:
         toggle_attention(): Toggles the attention mode.
         shuffle_emotions(): Shuffles the emotions for each player.
         change_player(): Changes the current player.
+        play_transition(): Play a transition sound while changing player  
         analyse_emotion(): Analyzes the emotion of the current move.
         give_feedback(accuracy): Gives feedback based on the accuracy of the emotion analysis.
         player_move(): Performs a move by the player.
@@ -127,6 +103,15 @@ class SimonSays:
         """
         player_move = self.move // 2
         return player_move
+    
+    def get_player_emotions(self):
+        """
+        Returns the list of shuffled emotions of the current player.
+
+        Returns:
+            list: The current player move.
+        """
+        return self.shuffled_emotions[str(self.player)]
 
     def toggle_feedback(self):
         """
@@ -159,7 +144,21 @@ class SimonSays:
             self.elmo.move_left()  # Look at player 1
         else:
             self.elmo.move_right()  # Look at player 2
-
+        
+        time.sleep(2)
+    
+    def play_transition(self):
+        """
+        Play a transition sound while is changing player 
+        """
+        transitions = ["alright", "and", "checkpoint", "dont_blink", 
+                        "feeling_inspired", "get_ready", "just_checking", 
+                        "make_us_glad", "next_player_turn", "one_emotion_down",
+                        "say_cheese", "showtime", "top_that"]
+        
+        transition = random.choice(transitions)
+        self.elmo.play_sound(f"transitions/{transition}.wav")
+        
     def analyse_emotion(self):
         """
         Analyzes the emotion of the current move.
@@ -168,8 +167,20 @@ class SimonSays:
             int: The accuracy of the emotion analysis.
         """
         frame = self.elmo.take_picture()
+        cv2.imwrite(f"frames/frame_{self.move}.png", frame)
+        
+        time.sleep(1.5)
+        
+        self.elmo.set_icon("slow_loading.gif") # Set loading icon
+        
+        time.sleep(6)
+        
+        self.elmo.set_icon("black.png") # After progress gif ended
+        
         player_move = self.get_player_move();
-        emotion = emotions[player_move]
+        emotion = self.get_player_emotions()[player_move]
+        print(emotion)
+        
         accuracy = self.elmo.analyse_picture(frame, emotion)
         accuracy = round(accuracy) if accuracy else 0
 
@@ -186,51 +197,52 @@ class SimonSays:
             accuracy (int): The accuracy of the emotion analysis.
         """
         if accuracy < 50:
-            face = random.choice(bad_face)
-        elif accuracy < 80:
-            face = random.choice(good_face)
+            self.elmo.set_image("cry.png")
+            self.elmo.play_sound("bad_feedback.wav")
         else:
-            face = random.choice(awesome_face)
+            self.elmo.set_image("images/emotions_game/stars.gif")
+            self.elmo.play_sound("good_feedback.wav")
 
-        self.elmo.set_image(face)
-        self.elmo.play_sound(feedback_sounds[face])
         time.sleep(5)
 
     def player_move(self):
         """
         Performs a move by the player.
         """
-        self.elmo.send_message("image::normal") # Set default image
+        self.elmo.set_image("normal.png") # Set default image
 
         if self.move == 2*len(emotions):
             self.status = 2  # End game
             self.elmo.send_message(f"game::end")
         else:
             self.change_player()
-
-            time.sleep(3)
+            
+            if (self.move == 0):
+                self.elmo.play_sound("first_emotion.wav")
+                time.sleep(4)
+            
+            else:
+                self.play_transition()
+                time.sleep(4)
 
             player_move = self.get_player_move()
             emotion = self.shuffled_emotions[str(self.player)][player_move]
 
-            self.elmo.say_emotion(emotion)
+            self.elmo.say_emotion(emotion) # say the emotion
+            self.elmo.set_image(f"emotions/{emotion}.png")
             self.logger.log_message(f"emotion::{emotion}")
 
-            time.sleep(1)
-
-            accuracy = self.analyse_emotion()
+            time.sleep(3)
+            
+            # Take a picture and analyse emotion
+            accuracy = self.analyse_emotion() 
             self.elmo.send_message(f"accuracy::{accuracy}")
             self.points[str(self.player)] += accuracy
 
-            time.sleep(2)
-
-            self.elmo.send_message("icon::elmo_idm.png")
-
             if self.player == 1 or (self.player == 2 and self.feedback):
-                print("Receive feedback")
+                #print("Receive feedback")
                 self.give_feedback(accuracy)
 
-            time.sleep(2)
             self.move += 1
 
     def play_game(self):
@@ -238,15 +250,15 @@ class SimonSays:
         Starts the game.
         """
         self.elmo.play_game()
-        self.elmo.send_message("image::normal")
-        self.elmo.send_message("icon::elmo_idm.png")
+        self.elmo.set_image("normal.png")
+        self.elmo.set_icon("black.png")
         self.elmo.move_pan(0)  # Look in the middle
 
         time.sleep(2)
         
         self.elmo.introduce_game()
 
-        time.sleep(16)
+        time.sleep(34)
 
         self.shuffle_emotions()
 
@@ -256,9 +268,10 @@ class SimonSays:
 
         if self.status == 2:
             self.elmo.move_pan(0)  # Look in the middle
+            self.elmo.set_icon("fireworks.gif")
             self.elmo.end_game()
 
-            time.sleep(4)
+            time.sleep(3)
 
             # Select winner and congrats
             winner = max(self.points, key=self.points.get)
@@ -270,11 +283,18 @@ class SimonSays:
                 self.elmo.move_right()  # Look at player 2
 
             time.sleep(2)
-
+            
             self.elmo.congrats_winner()
 
-            time.sleep(4)
-
+            time.sleep(6)
+            
+            self.elmo.move_pan(0)
+            
+            time.sleep(3)
+            
+            self.elmo.set_icon("heart.png")
+            self.elmo.play_sound("conclusion.wav")
+            
         if self.restart_flag:
             self.restart_flag = False
             return

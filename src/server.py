@@ -26,12 +26,14 @@ class ElmoServer:
         set_default_tilt(default_tilt): Set the default tilt angle
         get_control_motors(): Get the status of the motor control
         get_control_behaviour(): Get the status of the behaviour control
+        get_control_blush(): Get the status of the behaviour blush
         connect_elmo(): Connect to the Elmo robot
         send_message(message): Send a message to the Elmo robot
         send_request_command(command, **kwargs): Send a request command to the
                                                 Elmo robot
         toggle_motors(): Toggle the motor control
         toggle_behaviour(): Toggle the behaviour control
+        toggle_blush(): Toggle the blush control
         move_pan(angle): Pan move with a specific angle
         move_tilt(angle): Tilt move with a specific angle
         move_left(): Move to the left
@@ -40,6 +42,7 @@ class ElmoServer:
         decrease_volume(): Send message to decrease the volume
         grab_image(): Capture an image
         set_image(image_name): Set the image
+        set_icon(icon_name): Set the icon
         play_game(): Send status message - game on
         introduce_game(): Introduce the game
         say_emotion(emotion): Say an emotion
@@ -66,13 +69,14 @@ class ElmoServer:
         self.default_pan = 0
         self.default_tilt = 0
 
-        # For default, motors and behavior are disabled
-        self.control_motors = True
-        self.control_behaviour = False
-
         self.send_request_command("enable_behaviour", name="look_around", control=False)
+        self.send_request_command("enable_behaviour", name="blush", control=False)
         self.send_request_command("set_tilt_torque", control=True)
         self.send_request_command("set_pan_torque", control=True)
+
+        self.control_motors = True
+        self.control_behaviour = False
+        self.control_blush = False
 
         if not debug:
             self.connect_elmo()
@@ -81,8 +85,8 @@ class ElmoServer:
             print("Debug mode has been activated")
             self.debug = True
 
-        self.send_message("image::normal")
-        self.send_message("icon::elmo_idm.png")
+        self.set_image("normal.png")
+        self.set_icon("elmo_idm.png")
 
     def set_default_pan(self, default_pan):
         """
@@ -119,6 +123,15 @@ class ElmoServer:
             bool: The control behaviour object.
         """
         return self.control_behaviour
+
+    def get_control_blush(self):
+        """
+        Returns the control blush object.
+
+        Returns:
+            bool: The control blush object.
+        """
+        return self.control_blush
 
     def connect_elmo(self):
         """
@@ -180,7 +193,16 @@ class ElmoServer:
         self.send_request_command(
             "enable_behaviour", name="look_around", control=self.control_behaviour
         )
-        print("Behaviour: ", self.control_behaviour)
+
+    def toggle_blush(self):
+        """
+        Toggles the control blush and send a message and request command.
+        """
+        self.control_blush = not self.control_blush
+        self.send_message(f"blush::{self.control_blush}")
+        self.send_request_command(
+            "enable_behaviour", name="blush", control=self.control_blush
+        )
 
     def move_pan(self, angle):
         """
@@ -290,6 +312,15 @@ class ElmoServer:
         """
         self.send_message(f"image::{image_name}")
 
+    def set_icon(self, icon_name):
+        """
+        Sets the icon.
+
+        Args:
+            icon_name (str): The source name of the icon.
+        """
+        self.send_message(f"icon::{icon_name}")
+
     def play_game(self):
         """
         Sends a status message to start the game.
@@ -300,7 +331,7 @@ class ElmoServer:
         """
         Introduces the game.
         """
-        self.send_message("sound::introGame.wav")
+        self.play_sound("intro.wav")
 
     def say_emotion(self, emotion):
         """
@@ -309,7 +340,7 @@ class ElmoServer:
         Args:
             emotion (str): The emotion to say.
         """
-        self.send_message(f"sound::{emotion}.wav")
+        self.play_sound(f"emotions/{emotion}.wav")
 
     def take_picture(self):
         """
@@ -320,19 +351,20 @@ class ElmoServer:
         Returns:
             np.ndarray: The captured picture.
         """
-        self.send_message("sound::takePicture.wav")
+        self.play_sound("picture.wav")
+        time.sleep(0.1)
 
         # show 3, 2, 1 and take a picture
-        self.send_message("icon::3.jpeg")
+        self.set_icon("3.png")
         time.sleep(1)
 
-        self.send_message("icon::2.jpeg")
+        self.set_icon("2.png")
         time.sleep(0.5)
 
-        self.send_message("icon::1.jpeg")
+        self.set_icon("1.png")
         time.sleep(0.7)
 
-        self.send_message("icon::camera.jpeg")
+        self.set_icon("camera.png")
 
         return self.grab_image()
 
@@ -348,11 +380,11 @@ class ElmoServer:
             float: The value of the specified emotion in the analysis.
         """
         try:
-            face_analysis = DeepFace.analyze(frame)
+            face_analysis = DeepFace.analyze(frame, actions=["emotion"])
         except Exception as e:
             self.logger.log_error(e)
             return None
-        
+
         self.logger.log_message(face_analysis[0])
         return face_analysis[0]["emotion"][emotion]
 
@@ -369,13 +401,13 @@ class ElmoServer:
         """
         Sends a message to the robot to play the end game sound.
         """
-        self.send_message("sound::end_game.wav")
+        self.play_sound("end_game_song.wav")
 
     def congrats_winner(self):
         """
         Sends a message to the robot to play the sound to congratulate the winner.
         """
-        self.send_message("sound::winner.wav")
+        self.play_sound("end_game.wav")
 
     def close_all(self):
         """

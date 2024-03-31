@@ -13,9 +13,9 @@ speakers = mw.Speakers()
 leds = mw.Leds()
 server = mw.Server()
 
-image_path = "images/simon_images/"
-sound_path = "simon_sounds/"
-icon_path = "simon_icons/"
+image_path = "images/emotions_game/"
+sound_path = "emotions_game/"
+icon_path = "emotions_game/"
 
 
 def enable_torque():
@@ -54,10 +54,10 @@ def parse_message(message):
 
     elif command == "image":
         print("[IMAGE] setting...")
-        if "simon_images" in value:
+        if "emotions_game" in value:
             image_src = value
         else:
-            image_src = os.path.join(image_path, f"{value}.png")
+            image_src = os.path.join(image_path, f"{value}")
             print(image_src)
         onboard.image = image_src
         print("[IMAGE] src: ", image_src)
@@ -102,7 +102,7 @@ def main():
     """
 
     global s
-    
+
     # Parse arguments
     if len(sys.argv) == 3 or len(sys.argv) == 4:
         elmo_ip, elmo_port = sys.argv[1:3]

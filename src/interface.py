@@ -58,6 +58,11 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Button("Feedback", size=(15, 1), button_color=("white", "green")),
         ],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Button("Toggle Blush", size=(15, 1), button_color=("white", "red")),
+            sg.Button("Check Speakers", size=(15, 1)),
+        ],
         [sg.Text("", size=(1, 2))],
         [
             sg.Text("", size=(1, 1)),
@@ -121,6 +126,17 @@ def handle_events():
             elmo.move_tilt(value)
             default_tilt = int(value)
             elmo.set_default_tilt(default_tilt)
+
+    if event == "Toggle Blush":
+        elmo.toggle_blush()
+        # Change the color of the button
+        if elmo.get_control_blush():
+            window["Toggle Blush"].update(button_color=("white", "green"))
+        else:
+            window["Toggle Blush"].update(button_color=("white", "red"))
+
+    if event == "Check Speakers":
+        elmo.play_sound("picture.wav")
 
     if event == "⬆":
         elmo.increase_volume()
