@@ -34,6 +34,7 @@ class SimonSays:
         toggle_attention(): Toggles the attention mode.
         shuffle_emotions(): Shuffles the emotions for each player.
         change_player(): Changes the current player.
+        center_player(): Centers the player in the frame.
         play_transition(): Play a transition sound while changing player  
         analyse_emotion(): Analyzes the emotion of the current move.
         give_feedback(accuracy): Gives feedback based on the accuracy of the emotion analysis.
@@ -133,6 +134,77 @@ class SimonSays:
         self.logger.log_message(f"[EMOTIONS_1]: {self.shuffled_emotions["1"]}")
         self.logger.log_message(f"[EMOTIONS_2]: {self.shuffled_emotions["2"]}")
 
+    def center_player(self):
+        """
+        Centers the player in the frame, adjusting pan and tilt angles, with dead zones on all sides.
+
+        Raises:
+            RuntimeError: If no face is detected.
+        """
+
+        frame = self.elmo.take_picture()
+        cv2.imwrite("pre_centered_player.png", frame)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_classifier.detectMultiScale(gray, 1.1, 5, minSize=(100, 100))
+
+        if len(faces) == 0:
+            raise RuntimeError("No face detected in the frame.")
+
+        # Get frame center and dimensions
+        frame_width, frame_height = frame.shape[1], frame.shape[0]
+        frame_center_x = frame_width / 2
+        frame_center_y = frame_height / 2
+
+        # Extract face bounding box
+        x, y, w, h = faces[0]
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.imwrite("centered_player.png", frame)  # Save image
+
+        # Define dead zone margins
+        dead_zone_margin_x = 213
+        dead_zone_margin_y = 160
+
+        # Check if bounding box is within center zone
+        is_in_center_zone = (x + w / 2 >= dead_zone_margin_x and 
+                            x + w / 2 <= frame_width - dead_zone_margin_x and
+                            y + h / 2 >= dead_zone_margin_y and 
+                            y + h / 2 <= frame_height - dead_zone_margin_y)
+
+        # Calculate adjustments (only if out of center zone)
+        horizontal_adjustment = 0
+        vertical_adjustment = 0
+        if not is_in_center_zone:
+            horizontal_adjustment = ((frame_center_x - (x + w / 2)) // 4)
+            vertical_adjustment = ((frame_center_y - (y + h / 2)) // 8)
+
+        # Get and update default pan and tilt angles (assuming your Elmo functions)
+        default_pan = self.elmo.get_default_pan()
+        new_pan_angle = default_pan + int(horizontal_adjustment/2)
+        self.elmo.set_default_pan(new_pan_angle)
+        self.elmo.move_pan(new_pan_angle)
+        time.sleep(2)  # Adjust delay as needed
+
+        default_tilt = self.elmo.get_default_tilt()
+        new_tilt_angle = default_tilt - int(vertical_adjustment/2)
+        self.elmo.set_default_tilt(new_tilt_angle)
+        self.elmo.move_tilt(new_tilt_angle)
+
+        # Print debug info (optional)
+        print(f"Horizontal adjustment: {horizontal_adjustment}")
+        print(f"Vertical adjustment: {vertical_adjustment}")
+        print(f"In center zone: {is_in_center_zone}")
+        
+        # After       
+        frame_ = self.elmo.take_picture()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces_ = face_classifier.detectMultiScale(gray, 1.1, 5, minSize=(100, 100))
+
+        if len(faces_) > 0:
+            x_, y_, w_, h_ = faces_[0]
+            print(faces_[0])
+            cv2.rectangle(frame, (x_, y_), (x_ + w_, y_ + h_), (0, 255, 0), 2)
+            cv2.imwrite("pos_centered_player.png", frame_) 
+        
     def change_player(self):
         """
         Changes the current player.
@@ -249,55 +321,57 @@ class SimonSays:
         """
         Starts the game.
         """
-        self.elmo.play_game()
-        self.elmo.set_image("normal.png")
-        self.elmo.set_icon("black.png")
-        self.elmo.move_pan(0)  # Look in the middle
-
-        time.sleep(2)
+        self.center_player()
         
-        self.elmo.introduce_game()
+        # self.elmo.play_game()
+        # self.elmo.set_image("normal.png")
+        # self.elmo.set_icon("black.png")
+        # self.elmo.move_pan(0)  # Look in the middle
 
-        time.sleep(34)
+        # time.sleep(2)
+        
+        # self.elmo.introduce_game()
 
-        self.shuffle_emotions()
+        # time.sleep(34)
 
-        while self.status == 1 and not self.restart_flag:
-            self.elmo.send_message("game::loop")
-            self.player_move()
+        # self.shuffle_emotions()
 
-        if self.status == 2:
-            self.elmo.move_pan(0)  # Look in the middle
-            self.elmo.set_icon("fireworks.gif")
-            self.elmo.end_game()
+        # while self.status == 1 and not self.restart_flag:
+        #     self.elmo.send_message("game::loop")
+        #     self.player_move()
 
-            time.sleep(3)
+        # if self.status == 2:
+        #     self.elmo.move_pan(0)  # Look in the middle
+        #     self.elmo.set_icon("fireworks.gif")
+        #     self.elmo.end_game()
 
-            # Select winner and congrats
-            winner = max(self.points, key=self.points.get)
-            self.logger.log_message(self.points)
-            self.logger.log_message(f"winner::{winner}")
-            if winner == "1":
-                self.elmo.move_left()  # Look at player 1
-            else:
-                self.elmo.move_right()  # Look at player 2
+        #     time.sleep(3)
 
-            time.sleep(2)
+        #     # Select winner and congrats
+        #     winner = max(self.points, key=self.points.get)
+        #     self.logger.log_message(self.points)
+        #     self.logger.log_message(f"winner::{winner}")
+        #     if winner == "1":
+        #         self.elmo.move_left()  # Look at player 1
+        #     else:
+        #         self.elmo.move_right()  # Look at player 2
+
+        #     time.sleep(2)
             
-            self.elmo.congrats_winner()
+        #     self.elmo.congrats_winner()
 
-            time.sleep(6)
+        #     time.sleep(6)
             
-            self.elmo.move_pan(0)
+        #     self.elmo.move_pan(0)
             
-            time.sleep(3)
+        #     time.sleep(3)
             
-            self.elmo.set_icon("heart.png")
-            self.elmo.play_sound("conclusion.wav")
+        #     self.elmo.set_icon("heart.png")
+        #     self.elmo.play_sound("conclusion.wav")
             
-        if self.restart_flag:
-            self.restart_flag = False
-            return
+        # if self.restart_flag:
+        #     self.restart_flag = False
+        #     return
 
     def stop_game(self):
         """

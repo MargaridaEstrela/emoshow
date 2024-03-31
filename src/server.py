@@ -88,23 +88,41 @@ class ElmoServer:
         self.set_image("normal.png")
         self.set_icon("elmo_idm.png")
 
-    def set_default_pan(self, default_pan):
+    def set_default_pan(self, pan_angle):
         """
         Sets the default pan angle.
 
         Args:
             default_pan (int): The default pan angle.
         """
-        self.default_pan = default_pan
+        self.default_pan = pan_angle
 
-    def set_default_tilt(self, default_tilt):
+    def set_default_tilt(self, tilt_angle):
         """
         Sets the default tilt angle.
 
         Args:
             default_tilt (int): The default tilt angle.
         """
-        self.default_tilt = default_tilt
+        self.default_tilt = tilt_angle
+
+    def get_default_pan(self):
+        """
+        Returns the default pan angle.
+
+        Returns:
+            int: The default pan angle.
+        """
+        return self.default_pan
+
+    def get_default_tilt(self):
+        """
+        Returns the default tilt angle.
+
+        Returns:
+            int: The default tilt angle.
+        """
+        return self.default_tilt
 
     def get_control_motors(self):
         """
