@@ -118,14 +118,16 @@ def handle_events():
         if value:
             elmo.move_pan(value)
             default_pan = int(value)
-            elmo.set_default_pan(default_pan)
+            elmo.set_default_tilt_left(-default_pan)
+            elmo.set_default_pan_right(default_pan)
 
     if event == "SetTilt":
         value = values["tilt_value"]
         if value:
             elmo.move_tilt(value)
             default_tilt = int(value)
-            elmo.set_default_tilt(default_tilt)
+            elmo.set_default_tilt_left(default_tilt)
+            elmo.set_default_tilt_right(default_tilt)
 
     if event == "Toggle Blush":
         elmo.toggle_blush()

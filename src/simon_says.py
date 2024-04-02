@@ -136,19 +136,18 @@ class SimonSays:
 
     def center_player(self):
         """
-        Centers the player in the frame, adjusting pan and tilt angles, with dead zones on all sides.
-
-        Raises:
-            RuntimeError: If no face is detected.
+        Centers the player in the frame, adjusting pan and tilt angles, with 
+        dead zones on all sides. If no faces detected, returns and continues 
+        the game.
         """
-
-        frame = self.elmo.take_picture()
+        frame = self.elmo.grab_image()
         cv2.imwrite("pre_centered_player.png", frame)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_classifier.detectMultiScale(gray, 1.1, 5, minSize=(100, 100))
 
         if len(faces) == 0:
-            raise RuntimeError("No face detected in the frame.")
+            self.logger.log_error("No faces detected. Cannot center player")
+            return
 
         # Get frame center and dimensions
         frame_width, frame_height = frame.shape[1], frame.shape[0]
@@ -177,33 +176,37 @@ class SimonSays:
             horizontal_adjustment = ((frame_center_x - (x + w / 2)) // 4)
             vertical_adjustment = ((frame_center_y - (y + h / 2)) // 8)
 
-        # Get and update default pan and tilt angles (assuming your Elmo functions)
-        default_pan = self.elmo.get_default_pan()
-        new_pan_angle = default_pan + int(horizontal_adjustment/2)
-        self.elmo.set_default_pan(new_pan_angle)
+        # Get default pan and tilt angles
+        if self.player == 1:
+            default_pan = self.elmo.get_default_pan_left()
+            default_tilt = self.elmo.get_default_tilt_left()
+        else:
+            default_pan = self.elmo.get_default_pan_right()
+            default_tilt = self.elmo.get_default_tilt_right()
+        
+        new_pan_angle = default_pan + int(horizontal_adjustment/3)
+        new_tilt_angle = default_tilt - int(vertical_adjustment/3)
+        
+        # Check if values are within bounds
+        self.elmo.check_pan_angle(new_pan_angle)
+        self.elmo.check_tilt_angle(new_tilt_angle)
+        
+        # Update default values
+        if self.player == 1:
+            self.elmo.set_default_pan_left(new_pan_angle)
+            self.elmo.set_default_tilt_left(new_tilt_angle)
+        else:
+            self.elmo.set_default_pan_right(new_pan_angle)
+            self.elmo.set_default_tilt_right(new_tilt_angle)
+            
         self.elmo.move_pan(new_pan_angle)
         time.sleep(2)  # Adjust delay as needed
-
-        default_tilt = self.elmo.get_default_tilt()
-        new_tilt_angle = default_tilt - int(vertical_adjustment/2)
-        self.elmo.set_default_tilt(new_tilt_angle)
         self.elmo.move_tilt(new_tilt_angle)
 
-        # Print debug info (optional)
-        print(f"Horizontal adjustment: {horizontal_adjustment}")
-        print(f"Vertical adjustment: {vertical_adjustment}")
-        print(f"In center zone: {is_in_center_zone}")
-        
-        # After       
-        frame_ = self.elmo.take_picture()
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces_ = face_classifier.detectMultiScale(gray, 1.1, 5, minSize=(100, 100))
-
-        if len(faces_) > 0:
-            x_, y_, w_, h_ = faces_[0]
-            print(faces_[0])
-            cv2.rectangle(frame, (x_, y_), (x_ + w_, y_ + h_), (0, 255, 0), 2)
-            cv2.imwrite("pos_centered_player.png", frame_) 
+        # Save changes
+        self.logger.log_message(f"Horizontal adjustment: {horizontal_adjustment}")
+        self.logger.log_message(f"Vertical adjustment: {vertical_adjustment}")
+        self.logger.log_message(f"In center zone: {is_in_center_zone}")
         
     def change_player(self):
         """
@@ -217,7 +220,9 @@ class SimonSays:
         else:
             self.elmo.move_right()  # Look at player 2
         
-        time.sleep(2)
+        time.sleep(3)
+        
+        self.center_player() # center player in the frame if needed
     
     def play_transition(self):
         """
@@ -276,6 +281,8 @@ class SimonSays:
             self.elmo.play_sound("good_feedback.wav")
 
         time.sleep(5)
+        
+        self.elmo.set_image("normal.png") # Set default image 
 
     def player_move(self):
         """
@@ -300,7 +307,7 @@ class SimonSays:
             player_move = self.get_player_move()
             emotion = self.shuffled_emotions[str(self.player)][player_move]
 
-            self.elmo.say_emotion(emotion) # say the emotion
+            self.elmo.say_emotion(emotion)
             self.elmo.set_image(f"emotions/{emotion}.png")
             self.logger.log_message(f"emotion::{emotion}")
 
@@ -312,7 +319,6 @@ class SimonSays:
             self.points[str(self.player)] += accuracy
 
             if self.player == 1 or (self.player == 2 and self.feedback):
-                #print("Receive feedback")
                 self.give_feedback(accuracy)
 
             self.move += 1
@@ -321,57 +327,57 @@ class SimonSays:
         """
         Starts the game.
         """
-        self.center_player()
         
-        # self.elmo.play_game()
-        # self.elmo.set_image("normal.png")
-        # self.elmo.set_icon("black.png")
-        # self.elmo.move_pan(0)  # Look in the middle
+        self.elmo.play_game()
+        self.elmo.set_image("normal.png")
+        self.elmo.set_icon("black.png")
+        self.elmo.move_pan(0)  # Look in the middle
 
-        # time.sleep(2)
+        time.sleep(2)
         
+        # ! Uncomment this
         # self.elmo.introduce_game()
 
         # time.sleep(34)
 
-        # self.shuffle_emotions()
+        self.shuffle_emotions()
 
-        # while self.status == 1 and not self.restart_flag:
-        #     self.elmo.send_message("game::loop")
-        #     self.player_move()
+        while self.status == 1 and not self.restart_flag:
+            self.elmo.send_message("game::loop")
+            self.player_move()
 
-        # if self.status == 2:
-        #     self.elmo.move_pan(0)  # Look in the middle
-        #     self.elmo.set_icon("fireworks.gif")
-        #     self.elmo.end_game()
+        if self.status == 2:
+            self.elmo.move_pan(0)  # Look in the middle
+            self.elmo.set_icon("fireworks.gif")
+            self.elmo.end_game()
 
-        #     time.sleep(3)
+            time.sleep(3)
 
-        #     # Select winner and congrats
-        #     winner = max(self.points, key=self.points.get)
-        #     self.logger.log_message(self.points)
-        #     self.logger.log_message(f"winner::{winner}")
-        #     if winner == "1":
-        #         self.elmo.move_left()  # Look at player 1
-        #     else:
-        #         self.elmo.move_right()  # Look at player 2
+            # Select winner and congrats
+            winner = max(self.points, key=self.points.get)
+            self.logger.log_message(self.points)
+            self.logger.log_message(f"winner::{winner}")
+            if winner == "1":
+                self.elmo.move_left()  # Look at player 1
+            else:
+                self.elmo.move_right()  # Look at player 2
 
-        #     time.sleep(2)
+            time.sleep(2)
             
-        #     self.elmo.congrats_winner()
+            self.elmo.congrats_winner()
 
-        #     time.sleep(6)
+            time.sleep(6)
             
-        #     self.elmo.move_pan(0)
+            self.elmo.move_pan(0)
             
-        #     time.sleep(3)
+            time.sleep(3)
             
-        #     self.elmo.set_icon("heart.png")
-        #     self.elmo.play_sound("conclusion.wav")
+            self.elmo.set_icon("heart.png")
+            self.elmo.play_sound("conclusion.wav")
             
-        # if self.restart_flag:
-        #     self.restart_flag = False
-        #     return
+        if self.restart_flag:
+            self.restart_flag = False
+            return
 
     def stop_game(self):
         """

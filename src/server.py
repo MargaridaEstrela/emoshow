@@ -9,7 +9,7 @@ from deepface import DeepFace
 
 class ElmoServer:
     """
-    Represents the server for controlling Elmo, a robotic toy.
+    Represents the server for controlling Elmo.
 
     Args:
         elmo_ip (str): The IP address of the Elmo device.
@@ -22,8 +22,14 @@ class ElmoServer:
                                     connect mode. Defaults to False.
 
     Methods:
-        set_default_pan(default_pan): Set the default pan angle
-        set_default_tilt(default_tilt): Set the default tilt angle
+        set_default_pan_left(default_pan): Set the default left pan angle
+        set_default_pan_right(default_pan): Set the default right pan angle
+        set_default_tilt_left(default_tilt): Set the default left tilt angle
+        set_default_tilt_right(default_tilt): Set the default right tilt angle
+        get_default_pan_left(): Get the default left pan angle
+        get_default_pan_right(): Get the default right pan angle
+        get_default_tilt_left(): Get the default left tilt angle
+        get_default_tilt_right(): Get the default right tilt angle
         get_control_motors(): Get the status of the motor control
         get_control_behaviour(): Get the status of the behaviour control
         get_control_blush(): Get the status of the behaviour blush
@@ -66,8 +72,10 @@ class ElmoServer:
         self.connect_mode = connect_mode
         self.logger = logger
 
-        self.default_pan = 0
-        self.default_tilt = 0
+        self.default_pan_left = 0
+        self.default_pan_right = 0
+        self.default_tilt_left = 0
+        self.default_tilt_right = 0
 
         self.send_request_command("enable_behaviour", name="look_around", control=False)
         self.send_request_command("enable_behaviour", name="blush", control=False)
@@ -88,41 +96,77 @@ class ElmoServer:
         self.set_image("normal.png")
         self.set_icon("elmo_idm.png")
 
-    def set_default_pan(self, pan_angle):
+    def set_default_pan_left(self, pan_angle):
         """
-        Sets the default pan angle.
+        Sets the default pan angle for left player.
 
         Args:
             default_pan (int): The default pan angle.
         """
-        self.default_pan = pan_angle
+        self.default_pan_left = pan_angle
 
-    def set_default_tilt(self, tilt_angle):
+    def set_default_pan_right(self, pan_angle):
         """
-        Sets the default tilt angle.
+        Sets the default pan angle for right player.
+
+        Args:
+            default_pan (int): The default pan angle.
+        """
+        self.default_pan_right = pan_angle
+
+    def set_default_tilt_left(self, tilt_angle):
+        """
+        Sets the default tilt angle for left player.
 
         Args:
             default_tilt (int): The default tilt angle.
         """
-        self.default_tilt = tilt_angle
+        self.default_tilt_left = tilt_angle
 
-    def get_default_pan(self):
+    def set_default_tilt_right(self, tilt_angle):
         """
-        Returns the default pan angle.
+        Sets the default tilt angle for right player.
+
+        Args:
+            default_tilt (int): The default tilt angle.
+        """
+        self.default_tilt_right = tilt_angle
+
+    def get_default_pan_left(self):
+        """
+        Returns the default pan angle of the left player.
 
         Returns:
-            int: The default pan angle.
+            int: The default pan angle of the left player.
         """
-        return self.default_pan
+        return self.default_pan_left
 
-    def get_default_tilt(self):
+    def get_default_pan_right(self):
         """
-        Returns the default tilt angle.
+        Returns the default pan angle of the right player.
 
         Returns:
-            int: The default tilt angle.
+            int: The default pan angle of the right player.
         """
-        return self.default_tilt
+        return self.default_pan_right
+
+    def get_default_tilt_left(self):
+        """
+        Returns the default tilt angle of the left player.
+
+        Returns:
+            int: The default tilt angle of the left player.
+        """
+        return self.default_tilt_left
+
+    def get_default_tilt_right(self):
+        """
+        Returns the default tilt angle of the right player.
+
+        Returns:
+            int: The default tilt angle of the right player.
+        """
+        return self.default_tilt_right
 
     def get_control_motors(self):
         """
@@ -150,6 +194,34 @@ class ElmoServer:
             bool: The control blush object.
         """
         return self.control_blush
+
+    def check_pan_angle(self, angle):
+        """
+        Checks if the pan angle is valid. If it is not valid then returns a
+        valid angle.
+
+        Returns:
+            int: The angle
+        """
+        if angle > 40:
+            angle = 40
+        elif angle < -40:
+            angle = -40
+        return angle
+
+    def check_tilt_angle(self, angle):
+        """
+        Checks if the tilt angle is valid. If it is not valid then returns a
+        valid angle.
+
+        Returns:
+            int: The angle
+        """
+        if angle > 15:
+            angle = 15
+        elif angle < -15:
+            angle = -15
+        return angle
 
     def connect_elmo(self):
         """
@@ -247,9 +319,8 @@ class ElmoServer:
         This method adjusts the pan value to move the device to the left.
         The tilt value remains unchanged.
         """
-        pan_value = -self.default_pan
-        self.send_message(f"pan::{pan_value}")
-        self.send_message(f"tilt::{self.default_tilt}")
+        self.send_message(f"pan::{self.default_pan_left}")
+        self.send_message(f"tilt::{self.default_tilt_left}")
 
     def move_right(self):
         """
@@ -258,8 +329,8 @@ class ElmoServer:
         This method adjusts the pan value to move the device to the right.
         The tilt value remains unchanged.
         """
-        self.send_message(f"pan::{self.default_pan}")
-        self.send_message(f"tilt::{self.default_tilt}")
+        self.send_message(f"pan::{self.default_pan_right}")
+        self.send_message(f"tilt::{self.default_tilt_right}")
 
     def increase_volume(self):
         """
