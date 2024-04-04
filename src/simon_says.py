@@ -159,22 +159,12 @@ class SimonSays:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.imwrite("centered_player.png", frame)  # Save image
 
-        # Define dead zone margins
-        dead_zone_margin_x = 213
-        dead_zone_margin_y = 160
-
-        # Check if bounding box is within center zone
-        is_in_center_zone = (x + w / 2 >= dead_zone_margin_x and 
-                            x + w / 2 <= frame_width - dead_zone_margin_x and
-                            y + h / 2 >= dead_zone_margin_y and 
-                            y + h / 2 <= frame_height - dead_zone_margin_y)
-
-        # Calculate adjustments (only if out of center zone)
+        # Calculate adjustments
         horizontal_adjustment = 0
         vertical_adjustment = 0
-        if not is_in_center_zone:
-            horizontal_adjustment = ((frame_center_x - (x + w / 2)) // 4)
-            vertical_adjustment = ((frame_center_y - (y + h / 2)) // 8)
+        # if not is_in_center_zone:
+        horizontal_adjustment = ((frame_center_x - (x + w / 2)) // 4)
+        vertical_adjustment = ((frame_center_y - (y + h / 2)) // 8)
 
         # Get default pan and tilt angles
         if self.player == 1:
@@ -206,7 +196,6 @@ class SimonSays:
         # Save changes
         self.logger.log_message(f"Horizontal adjustment: {horizontal_adjustment}")
         self.logger.log_message(f"Vertical adjustment: {vertical_adjustment}")
-        self.logger.log_message(f"In center zone: {is_in_center_zone}")
         
     def change_player(self):
         """
@@ -335,10 +324,9 @@ class SimonSays:
 
         time.sleep(2)
         
-        # ! Uncomment this
-        # self.elmo.introduce_game()
+        self.elmo.introduce_game()
 
-        # time.sleep(34)
+        time.sleep(34)
 
         self.shuffle_emotions()
 

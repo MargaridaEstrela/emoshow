@@ -36,7 +36,7 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Text("Speakers", size=(10, 1)),
             sg.Text("", size=(6, 1)),
-            sg.Button("Player 1", size=(15, 1)),
+            sg.Button("Center Player", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
@@ -46,7 +46,7 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Button("⬆", size=(5, 1)),
             sg.Text("", size=(10, 1)),
-            sg.Button("Player 2", size=(15, 1)),
+            sg.Button("Player 1", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
@@ -56,12 +56,14 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Button("⬇", size=(5, 1)),
             sg.Text("", size=(10, 1)),
-            sg.Button("Feedback", size=(15, 1), button_color=("white", "green")),
+            sg.Button("Player 1", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
             sg.Button("Toggle Blush", size=(15, 1), button_color=("white", "red")),
             sg.Button("Check Speakers", size=(15, 1)),
+            sg.Text("", size=(31, 1)),
+            sg.Button("Feedback", size=(15, 1), button_color=("white", "green")),
         ],
         [sg.Text("", size=(1, 2))],
         [
@@ -145,6 +147,9 @@ def handle_events():
 
     if event == "⬇":
         elmo.decrease_volume()
+
+    if event == "Center Player":
+        simon_says.center_player()
 
     if event == "Player 1":
         elmo.move_left()
