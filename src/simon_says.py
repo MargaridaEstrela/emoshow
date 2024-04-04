@@ -178,8 +178,8 @@ class SimonSays:
         new_tilt_angle = default_tilt - int(vertical_adjustment/3)
         
         # Check if values are within bounds
-        self.elmo.check_pan_angle(new_pan_angle)
-        self.elmo.check_tilt_angle(new_tilt_angle)
+        new_pan_angle = self.elmo.check_pan_angle(new_pan_angle)
+        new_tilt_angle = self.elmo.check_tilt_angle(new_tilt_angle)
         
         # Update default values
         if self.player == 1:
@@ -217,7 +217,7 @@ class SimonSays:
         """
         Play a transition sound while is changing player 
         """
-        transitions = ["alright", "and", "checkpoint", "dont_blink", 
+        transitions = ["alright", "checkpoint", "dont_blink", 
                         "feeling_inspired", "get_ready", "just_checking", 
                         "make_us_glad", "next_player_turn", "one_emotion_down",
                         "say_cheese", "showtime", "top_that"]
@@ -278,6 +278,7 @@ class SimonSays:
         Performs a move by the player.
         """
         self.elmo.set_image("normal.png") # Set default image
+        print("p[layer move]")
 
         if self.move == 2*len(emotions):
             self.status = 2  # End game
@@ -309,6 +310,8 @@ class SimonSays:
 
             if self.player == 1 or (self.player == 2 and self.feedback):
                 self.give_feedback(accuracy)
+            else:
+                time.sleep(3)
 
             self.move += 1
 
@@ -335,6 +338,7 @@ class SimonSays:
             self.player_move()
 
         if self.status == 2:
+            self.elmo.set_image("normal.png")
             self.elmo.move_pan(0)  # Look in the middle
             self.elmo.set_icon("fireworks.gif")
             self.elmo.end_game()

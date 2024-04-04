@@ -46,7 +46,7 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Button("⬆", size=(5, 1)),
             sg.Text("", size=(10, 1)),
-            sg.Button("Player 1", size=(15, 1)),
+            sg.Button("Default Icon", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
@@ -56,7 +56,7 @@ def create_layout():
             sg.Text("", size=(10, 1)),
             sg.Button("⬇", size=(5, 1)),
             sg.Text("", size=(10, 1)),
-            sg.Button("Player 1", size=(15, 1)),
+            sg.Button("Default Screen", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
@@ -120,7 +120,7 @@ def handle_events():
         if value:
             elmo.move_pan(value)
             default_pan = int(value)
-            elmo.set_default_tilt_left(-default_pan)
+            elmo.set_default_pan_left(-default_pan)
             elmo.set_default_pan_right(default_pan)
 
     if event == "SetTilt":
@@ -151,11 +151,11 @@ def handle_events():
     if event == "Center Player":
         simon_says.center_player()
 
-    if event == "Player 1":
-        elmo.move_left()
+    if event == "Default Screen":
+        elmo.set_image("normal.png")
 
-    if event == "Player 2":
-        elmo.move_right()
+    if event == "Default Icon":
+        elmo.set_icon("elmo_idm.png")
 
     if event == "Feedback":
         simon_says.toggle_feedback()
