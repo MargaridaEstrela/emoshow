@@ -33,9 +33,9 @@ def create_layout():
             sg.Text("", size=(1, 1)),
             sg.Button("Toggle Behaviour", size=(15, 1), button_color=("white", "red")),
             sg.Button("Toggle Motors", size=(15, 1), button_color=("white", "green")),
-            sg.Text("", size=(10, 1)),
+            sg.Text("", size=(9, 1)),
             sg.Text("Speakers", size=(10, 1)),
-            sg.Text("", size=(6, 1)),
+            sg.Text("", size=(11, 1)),
             sg.Button("Center Player", size=(15, 1)),
         ],
         [
@@ -43,36 +43,37 @@ def create_layout():
             sg.Text("Pan", size=(3, 1)),
             sg.InputText(key="pan_value", size=(18, 1)),
             sg.Button("Set", key="SetPan", size=(8, 1)),
-            sg.Text("", size=(10, 1)),
+            sg.Text("", size=(9, 1)),
             sg.Button("⬆", size=(5, 1)),
-            sg.Text("", size=(10, 1)),
-            sg.Button("Default Icon", size=(15, 1)),
+            sg.Text("", size=(15, 1)),
+            sg.Button("Default Screen", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
             sg.Text("Tilt", size=(3, 1)),
             sg.InputText(key="tilt_value", size=(18, 1)),
             sg.Button("Set", key="SetTilt", size=(8, 1)),
-            sg.Text("", size=(10, 1)),
+            sg.Text("", size=(9, 1)),
             sg.Button("⬇", size=(5, 1)),
-            sg.Text("", size=(10, 1)),
-            sg.Button("Default Screen", size=(15, 1)),
+            sg.Text("", size=(15, 1)),
+            sg.Button("Default Icon", size=(15, 1)),
         ],
         [
             sg.Text("", size=(1, 1)),
             sg.Button("Toggle Blush", size=(15, 1), button_color=("white", "red")),
             sg.Button("Check Speakers", size=(15, 1)),
-            sg.Text("", size=(31, 1)),
+            sg.Text("", size=(35, 1)),
             sg.Button("Feedback", size=(15, 1), button_color=("white", "green")),
         ],
         [sg.Text("", size=(1, 2))],
         [
+            sg.Text("", size=(6, 1)),
+            sg.Button("Play", size=(22, 1)),
+            sg.Text("", size=(5, 1)),
+            sg.Button("Restart", size=(22, 1)),
+            sg.Text("", size=(5, 1)),
+            sg.Button("Close All", size=(22, 1)),
             sg.Text("", size=(1, 1)),
-            sg.Button("Play", size=(24, 1)),
-            sg.Text("", size=(5, 1)),
-            sg.Button("Restart", size=(24, 1)),
-            sg.Text("", size=(5, 1)),
-            sg.Button("Close All", size=(24, 1)),
         ],
         [sg.Text("", size=(1, 1))],
         [sg.Image(filename="", key="image")],
@@ -166,8 +167,7 @@ def handle_events():
             window["Feedback"].update(button_color=("white", "red"))
 
     if event == "Play":
-        simon_says.set_status(1)  # Playing game
-        elmo.send_message(f"status::{simon_says.get_status()}")
+        simon_says.set_status(1)  # Playing games
         if simon_says.game_thread is None or not simon_says.game_thread.is_alive():
             simon_says.game_thread = threading.Thread(target=simon_says.play_game)
             simon_says.game_thread.start()

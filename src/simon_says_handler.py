@@ -132,8 +132,8 @@ def main():
     while True:
         data, addr = s.recvfrom(1024)
         data = data.decode("utf-8")
-        print("Message from: " + str(addr))
-        print("From connected user: " + data)
+        # print("Message from: " + str(addr))
+        # print("From connected user: " + data)
 
         if not debug:
             parse_message(data)

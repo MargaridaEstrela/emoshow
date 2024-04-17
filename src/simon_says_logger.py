@@ -18,7 +18,7 @@ class SimonSaysLogger:
     def __init__(self, log_file="simon_says.log"):
         self.log_file = log_file
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         self.handler = logging.FileHandler(self.log_file)
         self.handler.setFormatter(formatter)

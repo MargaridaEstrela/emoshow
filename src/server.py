@@ -1,10 +1,7 @@
 import socket
-import time
-
 import cv2
 import numpy as np
 import requests
-from deepface import DeepFace
 
 
 class ElmoServer:
@@ -40,6 +37,8 @@ class ElmoServer:
         toggle_motors(): Toggle the motor control
         toggle_behaviour(): Toggle the behaviour control
         toggle_blush(): Toggle the blush control
+        check_pan_angle(self, angle): Check if the pan angle is valid
+        check_tilt_angle(self, angle): Check if the tilt angle is valid
         move_pan(angle): Pan move with a specific angle
         move_tilt(angle): Tilt move with a specific angle
         move_left(): Move to the left
@@ -49,14 +48,7 @@ class ElmoServer:
         grab_image(): Capture an image
         set_image(image_name): Set the image
         set_icon(icon_name): Set the icon
-        play_game(): Send status message - game on
-        introduce_game(): Introduce the game
-        say_emotion(emotion): Say an emotion
-        take_picture(): Take a picture
-        analyse_picture(frame, emotion): Analyse the picture
         play_sound(sound): Play a sound
-        end_game(): End the game
-        congrats_winner(): Congratulate the winner
         close_all(): Close all connections
 
     """
@@ -195,34 +187,6 @@ class ElmoServer:
         """
         return self.control_blush
 
-    def check_pan_angle(self, angle):
-        """
-        Checks if the pan angle is valid. If it is not valid then returns a
-        valid angle.
-
-        Returns:
-            int: The angle
-        """
-        if angle > 40:
-            angle = 40
-        elif angle < -40:
-            angle = -40
-        return angle
-
-    def check_tilt_angle(self, angle):
-        """
-        Checks if the tilt angle is valid. If it is not valid then returns a
-        valid angle.
-
-        Returns:
-            int: The angle
-        """
-        if angle > 15:
-            angle = 15
-        elif angle < -15:
-            angle = -15
-        return angle
-
     def connect_elmo(self):
         """
         Connects to the Elmo robot.
@@ -293,6 +257,34 @@ class ElmoServer:
         self.send_request_command(
             "enable_behaviour", name="blush", control=self.control_blush
         )
+
+    def check_pan_angle(self, angle):
+        """
+        Checks if the pan angle is valid. If it is not valid then returns a
+        valid angle.
+
+        Returns:
+            int: The angle
+        """
+        if angle > 40:
+            angle = 40
+        elif angle < -40:
+            angle = -40
+        return angle
+
+    def check_tilt_angle(self, angle):
+        """
+        Checks if the tilt angle is valid. If it is not valid then returns a
+        valid angle.
+
+        Returns:
+            int: The angle
+        """
+        if angle > 15:
+            angle = 15
+        elif angle < -15:
+            angle = -15
+        return angle
 
     def move_pan(self, angle):
         """
@@ -410,73 +402,6 @@ class ElmoServer:
         """
         self.send_message(f"icon::{icon_name}")
 
-    def play_game(self):
-        """
-        Sends a status message to start the game.
-        """
-        self.send_message("game::on")
-
-    def introduce_game(self):
-        """
-        Introduces the game.
-        """
-        self.play_sound("intro.wav")
-
-    def say_emotion(self, emotion):
-        """
-        Says an emotion.
-
-        Args:
-            emotion (str): The emotion to say.
-        """
-        self.play_sound(f"emotions/{emotion}.wav")
-
-    def take_picture(self):
-        """
-        Sound and icons sequence to display when taking a picture.
-
-        This method plays a sound, displays a countdown sequence of icons (3, 2, 1), and captures an image.
-
-        Returns:
-            np.ndarray: The captured picture.
-        """
-        self.play_sound("picture.wav")
-        time.sleep(0.1)
-
-        # show 3, 2, 1 and take a picture
-        self.set_icon("3.png")
-        time.sleep(1)
-
-        self.set_icon("2.png")
-        time.sleep(0.5)
-
-        self.set_icon("1.png")
-        time.sleep(0.7)
-
-        self.set_icon("camera.png")
-
-        return self.grab_image()
-
-    def analyse_picture(self, frame, emotion):
-        """
-        Analyzes a picture frame and returns the specified emotion.
-
-        Args:
-            frame (numpy.ndarray): The picture frame to be analyzed.
-            emotion (str): The emotion to be extracted from the analysis.
-
-        Returns:
-            float: The value of the specified emotion in the analysis.
-        """
-        try:
-            face_analysis = DeepFace.analyze(frame, actions=["emotion"])
-        except Exception as e:
-            self.logger.log_error(e)
-            return None
-
-        self.logger.log_message(face_analysis[0])
-        return face_analysis[0]["emotion"][emotion]
-
     def play_sound(self, sound):
         """
         Plays the specified sound.
@@ -486,18 +411,6 @@ class ElmoServer:
         """
         self.send_message(f"sound::{sound}")
 
-    def end_game(self):
-        """
-        Sends a message to the robot to play the end game sound.
-        """
-        self.play_sound("end_game_song.wav")
-
-    def congrats_winner(self):
-        """
-        Sends a message to the robot to play the sound to congratulate the winner.
-        """
-        self.play_sound("end_game.wav")
-
     def close_all(self):
         """
         Closes all connections and shuts down the server.
@@ -506,8 +419,6 @@ class ElmoServer:
         If the debug flag is set to False, it also shuts down the Elmo socket.
 
         """
-        self.send_message("game::off")
-
         if self.debug == False:
             self.elmo_socket.shutdown(socket.SHUT_RDWR)
             self.elmo_socket.close()
