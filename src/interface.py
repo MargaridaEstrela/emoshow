@@ -27,7 +27,7 @@ def create_layout():
 
     sg.theme("LightBlue3")
 
-    layout = [
+    settings_layout = [
         [sg.Text("", size=(1, 1))],
         [
             sg.Text("", size=(1, 1)),
@@ -79,6 +79,61 @@ def create_layout():
         [sg.Image(filename="", key="image")],
     ]
 
+    game_layout = [
+        [sg.Text("", size=(1, 1))],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Move: ", size=(9, 1)),
+            sg.Text("", size=(5, 1), key="move"),
+            sg.Text("", size=(30, 1)),
+            sg.Text("Emotion: ", size=(9, 1)),
+            sg.Text("", size=(11, 1), key="emotion"),
+        ],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Player 1: ", size=(9, 1)),
+            sg.Text("", size=(15, 1), key="player1"),
+        ],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Player 2: ", size=(9, 1)),
+            sg.Text("", size=(15, 1), key="player2"),
+        ],
+        [sg.Text("", size=(1, 1))],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Emotions 1:", size=(9, 1)),
+            sg.Text("", size=(100, 1), key="emotions1"),
+        ],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Emotions 2:", size=(9, 1)),
+            sg.Text("", size=(100, 1), key="emotions2"),
+        ],
+        [sg.Text("", size=(1, 2))],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("First Player:", size=(9, 1)),
+            sg.Text("", size=(5, 1), key="first"),
+        ],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Excluded Player:", size=(13, 1)),
+            sg.Text("", size=(5, 1), key="excluded"),
+        ],
+    ]
+
+    layout = [
+        [
+            sg.TabGroup(
+                [[sg.Tab("Settings", settings_layout), sg.Tab("Game", game_layout)]],
+                key="-TAB GROUP-",
+                expand_x=True,
+                expand_y=True,
+            ),
+        ]
+    ]
+
     return layout
 
 
@@ -94,6 +149,15 @@ def handle_events():
     window close event.
     """
     event, values = window.read(timeout=1)
+
+    window["move"].update(simon_says.get_move())
+    window["emotion"].update(simon_says.get_emotion())
+    window["player1"].update(simon_says.get_points()["1"])
+    window["player2"].update(simon_says.get_points()["2"])
+    window["emotions1"].update(simon_says.get_shuffled_emotions()["1"])
+    window["emotions2"].update(simon_says.get_shuffled_emotions()["2"])
+    window["first"].update(simon_says.get_first_player())
+    window["excluded"].update(simon_says.get_excluded_player())
 
     if not debug_mode:
         img = elmo.grab_image()

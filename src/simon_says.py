@@ -29,6 +29,7 @@ class SimonSays:
         points (dict): The points of each player.
         shuffled_emotions (dict) : The shuffled emotions for each player.
         status (int): The status of the game (0: reset, 1: playing, 2: end game).
+        emotion (string): The current emotion.
         feedback (boolean): The feedback mode (False: unequal feedback, True: equal feedback).
         remaining_transitions (list): The remaining transitions between moves.
         logger (object): The logger object for logging messages.
@@ -39,7 +40,9 @@ class SimonSays:
         set_status(status): Sets the status of the game.
         set_attention(attention): Sets the attention mode.
         get_status(): Returns the status of the game.
-        get_attention(): Returns the attention mode.
+        get_emotion(): Returns the current emotion.
+        get_points(): Returns the points of each player.
+        get_feedback(): Returns the attention mode.
         toggle_attention(): Toggles the attention mode.
         shuffle_emotions(): Shuffles the emotions for each player.
         dynamic_intro(): Plays the dynamics for the intro of the game.
@@ -60,9 +63,12 @@ class SimonSays:
         self.elmo = elmo  # Elmo robot
         self.move = 0  # Current move
         self.player = 1  # Current player
+        self.first_player = 0 # First player
+        self.excluded_player = 0 # Excluded player
         self.points = {"1": 0, "2": 0}  # Points of each player
-        self.shuffled_emotions = {} # Shuffled emotions for each player
+        self.shuffled_emotions = {"1":[], "2":[]} # Shuffled emotions for each player
         self.status = 0  # 0: reset, 1: playing, 2: end game
+        self.emotion = "" # Current emotion
         self.feedback = True  # Feedback mode
         self.remaining_transitions = transitions # Transitions between moves
 
@@ -89,6 +95,33 @@ class SimonSays:
             feedback (boolean): The feedback mode.
         """
         self.feedback = feedback
+        
+    def get_move(self):
+        """
+        Returns the current move.
+
+        Returns:
+            int: The current move.
+        """
+        return self.move
+    
+    def get_first_player(self):
+        """
+        Returns the first player
+        
+        Returns:
+            int: first player.
+        """
+        return self.first_player
+    
+    def get_excluded_player(self):
+        """
+        Returns the excluded player
+        
+        Returns:
+            int: excluded player.
+        """
+        return self.excluded_player;
 
     def get_status(self):
         """
@@ -98,6 +131,33 @@ class SimonSays:
             int: The status of the game.
         """
         return self.status
+    
+    def get_emotion(self):
+        """
+        Returns the current emotion.
+
+        Returns:
+            string: The current emotion.
+        """
+        return self.emotion
+    
+    def get_shuffled_emotions(self):
+        """
+        Returns the shuffled emotions for each player.
+
+        Returns:
+            dict: The shuffled emotions for each player.
+        """
+        return self.shuffled_emotions
+    
+    def get_points(self):
+        """
+        Returns the points of each player.
+
+        Returns:
+            dict: The points of each player.
+        """
+        return self.points
 
     def get_feedback(self):
         """
@@ -358,14 +418,11 @@ class SimonSays:
         time.sleep(6)    
         self.elmo.set_icon("black.png") # After progress gif ended
         
-        player_move = self.get_player_move();
-        emotion = self.get_player_emotions()[player_move]
-        
         # DeepFace analysis
         try:
             face_analysis = DeepFace.analyze(frame, actions=["emotion"])
             self.logger.log_message(face_analysis[0])
-            accuracy = round(face_analysis[0]["emotion"][emotion])
+            accuracy = round(face_analysis[0]["emotion"][self.emotion])
         except Exception as e:
             self.logger.log_error(e)
             accuracy = 0
@@ -407,15 +464,15 @@ class SimonSays:
             
             else:
                 self.play_transition()
-                time.sleep(4)
+                time.sleep(5)
 
             player_move = self.get_player_move()
-            emotion = self.shuffled_emotions[str(self.player)][player_move]
+            self.emotion = self.shuffled_emotions[str(self.player)][player_move]
 
             # Say emotion
-            self.logger.log_message(f"Emotion: {emotion}")
-            self.elmo.play_sound(f"emotions/{emotion}.wav")
-            self.elmo.set_image(f"emotions/{emotion}.png")
+            self.logger.log_message(f"Emotion: {self.emotion}")
+            self.elmo.play_sound(f"emotions/{self.emotion}.wav")
+            self.elmo.set_image(f"emotions/{self.emotion}.png")
 
             time.sleep(3)
             
@@ -428,14 +485,23 @@ class SimonSays:
             self.logger.log_message(f"Player: {str(self.player)}, points: \
                 {self.points[str(self.player)]}")
 
-            if self.player == 1 or (self.player == 2 and self.feedback):
+            if self.feedback:
                 self.give_feedback(accuracy)
             else:
                 # Excluded participant only receive feedback on 2nd and 6th emotion
-                if not self.feedback and (self.move == 3 or self.move == 11):
+                if not self.feedback and self.player != self.excluded_player:
                     self.give_feedback(accuracy)
                 else:
-                    time.sleep(3)
+                    if self.player == self.excluded_player and \
+                        self.excluded_player == self.first_player and \
+                            (self.move == 2 or self.move == 10):
+                                self.give_feedback(accuracy);
+                    elif self.player == self.excluded_player and \
+                        self.excluded_player != self.first_player and \
+                            (self.move == 3 or self.move == 11):
+                                self.give_feedback(accuracy);
+                    else:
+                        time.sleep(3)
 
             self.move += 1
 
