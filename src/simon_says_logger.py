@@ -10,18 +10,42 @@ class SimonSaysLogger:
         logger (object): The logger object.
 
     Methods:
+        set_window(window): Connects the interface with the logger.
+        set_filename(filename): Sets the filename of the log file.
         log_message(message): Logs a debug message with the provided message.
         log_error(message): Logs an error message with the provided message.
         close(): Closes the file handler and shuts down the logging system.
     """
 
-    def __init__(self, log_file="simon_says.log"):
+    def __init__(self, log_file="logs/simon_says.log"):
         self.log_file = log_file
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        self.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         self.handler = logging.FileHandler(self.log_file)
-        self.handler.setFormatter(formatter)
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
+
+    def set_window(self, window):
+        """
+        Connects the interface with the logger.
+
+        Args:
+            window (object): The window object.
+        """
+        self.window = window
+
+    def set_filename(self, filename):
+        """
+        Sets the filename of the log file.
+
+        Args:
+            filename (str): The name of the log file.
+        """
+        self.log_file = f"logs/{filename}"
+        self.handler.close()
+        self.handler = logging.FileHandler(self.log_file)
+        self.handler.setFormatter(self.formatter)
         self.logger.addHandler(self.handler)
 
     def log_message(self, message):
@@ -32,7 +56,8 @@ class SimonSaysLogger:
             message (str): The message to be logged.
         """
         try:
-            self.logger.debug(f"{message}")
+            self.logger.info(f"{message}")
+            # print(message)
         except Exception as e:
             self.logger.error(f"Error logging message: {e}")
 

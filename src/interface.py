@@ -30,7 +30,7 @@ def create_layout():
     settings_layout = [
         [sg.Text("", size=(1, 1))],
         [
-            sg.Text("", size=(1, 1)),
+            sg.Text("", size=(8, 1)),
             sg.Button("Toggle Behaviour", size=(15, 1), button_color=("white", "red")),
             sg.Button("Toggle Motors", size=(15, 1), button_color=("white", "green")),
             sg.Text("", size=(9, 1)),
@@ -39,7 +39,7 @@ def create_layout():
             sg.Button("Center Player", size=(15, 1)),
         ],
         [
-            sg.Text("", size=(1, 1)),
+            sg.Text("", size=(8, 1)),
             sg.Text("Pan", size=(3, 1)),
             sg.InputText(key="pan_value", size=(18, 1)),
             sg.Button("Set", key="SetPan", size=(8, 1)),
@@ -49,7 +49,7 @@ def create_layout():
             sg.Button("Default Screen", size=(15, 1)),
         ],
         [
-            sg.Text("", size=(1, 1)),
+            sg.Text("", size=(8, 1)),
             sg.Text("Tilt", size=(3, 1)),
             sg.InputText(key="tilt_value", size=(18, 1)),
             sg.Button("Set", key="SetTilt", size=(8, 1)),
@@ -59,7 +59,7 @@ def create_layout():
             sg.Button("Default Icon", size=(15, 1)),
         ],
         [
-            sg.Text("", size=(1, 1)),
+            sg.Text("", size=(8, 1)),
             sg.Button("Toggle Blush", size=(15, 1), button_color=("white", "red")),
             sg.Button("Check Speakers", size=(15, 1)),
             sg.Text("", size=(35, 1)),
@@ -67,7 +67,7 @@ def create_layout():
         ],
         [sg.Text("", size=(1, 2))],
         [
-            sg.Text("", size=(6, 1)),
+            sg.Text("", size=(9, 1)),
             sg.Button("Play", size=(22, 1)),
             sg.Text("", size=(5, 1)),
             sg.Button("Restart", size=(22, 1)),
@@ -76,10 +76,18 @@ def create_layout():
             sg.Text("", size=(1, 1)),
         ],
         [sg.Text("", size=(1, 1))],
-        [sg.Image(filename="", key="image")],
+        [sg.Text("", size=(2, 1)), sg.Image(filename="", key="image")],
+        [sg.Text("", size=(1, 1))],
     ]
 
     game_layout = [
+        [sg.Text("", size=(1, 1))],
+        [
+            sg.Text("", size=(1, 1)),
+            sg.Text("Logs filename:"),
+            sg.Input(key="-FILENAME-"),
+            sg.Button("Ok", size=(5, 1)),
+        ],
         [sg.Text("", size=(1, 1))],
         [
             sg.Text("", size=(1, 1)),
@@ -121,12 +129,18 @@ def create_layout():
             sg.Text("Excluded Player:", size=(13, 1)),
             sg.Text("", size=(5, 1), key="excluded"),
         ],
+        [sg.Text("", size=(1, 2))],
     ]
 
     layout = [
         [
             sg.TabGroup(
-                [[sg.Tab("Settings", settings_layout), sg.Tab("Game", game_layout)]],
+                [
+                    [
+                        sg.Tab("Settings", settings_layout),
+                        sg.Tab("Game", game_layout),
+                    ]
+                ],
                 key="-TAB GROUP-",
                 expand_x=True,
                 expand_y=True,
@@ -163,6 +177,9 @@ def handle_events():
         img = elmo.grab_image()
         img_bytes = cv2.imencode(".png", img)[1].tobytes()
         window["image"].update(data=img_bytes)
+
+    if event == "Ok":
+        logger.set_filename(values["-FILENAME-"])
 
     if event == "Toggle Behaviour":
         elmo.toggle_behaviour()
@@ -239,9 +256,6 @@ def handle_events():
     if event == "Restart":
         simon_says.stop_game()
         simon_says.restart_game()
-        elmo.set_image("normal")
-        elmo.send_message("icon::elmo_idm.png")
-        elmo.move_pan(0)
 
     if (
         event == sg.WIN_CLOSED or event == "Close All"
@@ -283,6 +297,7 @@ def main():
 
     # Start logger
     logger = SimonSaysLogger()
+    logger.set_window(window)
 
     # Start server
     elmo = ElmoServer(

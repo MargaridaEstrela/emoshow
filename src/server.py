@@ -82,11 +82,11 @@ class ElmoServer:
             self.connect_elmo()
             self.debug = False
         else:
-            print("Debug mode has been activated")
+            # print("Debug mode has been activated")
             self.debug = True
 
         self.set_image("normal.png")
-        self.set_icon("elmo_idm.png")
+        self.set_icon("black.png")
 
     def set_default_pan_left(self, pan_angle):
         """
@@ -192,7 +192,7 @@ class ElmoServer:
         Connects to the Elmo robot.
         """
         self.elmo_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        print("Socket created!")
+        # print("Socket created!")
 
     def send_message(self, message):
         """
@@ -204,10 +204,10 @@ class ElmoServer:
         self.logger.log_message(message)
 
         if self.debug == True:
-            print("[DEBUG]: " + message)
+            # print("[DEBUG]: " + message)
             return "debug"
 
-        print("Sending message: " + message)
+        # print("Sending message: " + message)
         self.elmo_socket.sendto(message.encode("utf-8"), (self.elmo_ip, self.elmo_port))
 
     def send_request_command(self, command, **kwargs):
@@ -222,12 +222,12 @@ class ElmoServer:
             try:
                 url = "http://" + self.elmo_ip + ":8001/command"
                 kwargs["op"] = command
-                print(kwargs)
+                # print(kwargs)
                 res = requests.post(url, json=kwargs, timeout=1).json()
                 if not res["success"]:
-                    self.on_error(res["message"])
+                    return
             except Exception as e:
-                print(e)
+                return
 
     def toggle_motors(self):
         """

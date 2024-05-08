@@ -63,8 +63,8 @@ class SimonSays:
         self.elmo = elmo  # Elmo robot
         self.move = 0  # Current move
         self.player = 1  # Current player
-        self.first_player = 0 # First player
-        self.excluded_player = 0 # Excluded player
+        self.first_player = -1 # First player
+        self.excluded_player = -1 # Excluded player
         self.points = {"1": 0, "2": 0}  # Points of each player
         self.shuffled_emotions = {"1":[], "2":[]} # Shuffled emotions for each player
         self.status = 0  # 0: reset, 1: playing, 2: end game
@@ -226,12 +226,12 @@ class SimonSays:
         self.elmo.set_icon("3.png")
         time.sleep(1)
         self.elmo.set_icon("2.png")
-        time.sleep(0.5)
+        time.sleep(0.7)
         self.elmo.set_icon("1.png")
         time.sleep(0.7)
         self.elmo.set_icon("camera.png")
         time.sleep(1)
-        self.elmo.set_icon("slow_loading.gif")
+        self.elmo.set_icon("loading_4.gif")
         time.sleep(6)  
         self.elmo.set_icon("black.png")
         
@@ -253,23 +253,8 @@ class SimonSays:
         time.sleep(2)
         
         self.elmo.set_icon("heart.png")
-        self.elmo.play_sound("conclusion_1.wav")
-        time.sleep(2.5)
-        
-        self.elmo.move_left()
-        time.sleep(2)
-        self.elmo.play_sound("conclusion_2.wav")
-        time.sleep(8.5)
-        
-        self.elmo.move_right()
-        time.sleep(2)
-        self.elmo.play_sound("conclusion_3.wav")
-        time.sleep(7)
-        
-        self.elmo.move_pan(0)
-        time.sleep(2)
-        self.elmo.play_sound("conclusion_4.wav")
-        time.sleep(3)
+        self.elmo.play_sound("conclusion.wav")
+        time.sleep(22.5)
         
         # Joke Time        
         self.elmo.move_left()
@@ -358,7 +343,6 @@ class SimonSays:
             else:
                 self.player = 1
         
-        print("player: ", self.player)
         self.logger.log_message(f"Player: {self.player}")
         self.logger.log_message(f"Move: {self.move}")
         
@@ -367,7 +351,7 @@ class SimonSays:
         else:
             self.elmo.move_right()
         
-        time.sleep(1)
+        time.sleep(2.5)
         
         self.center_player() # center player in the frame if needed
     
@@ -414,8 +398,8 @@ class SimonSays:
         cv2.imwrite(f"frames/frame_{self.move}.png", frame) 
         
         time.sleep(1.5)
-        self.elmo.set_icon("slow_loading.gif") # Set loading icon
-        time.sleep(6)    
+        self.elmo.set_icon("loading_4.gif") # Set loading icon
+        time.sleep(4)
         self.elmo.set_icon("black.png") # After progress gif ended
         
         # DeepFace analysis
@@ -437,8 +421,12 @@ class SimonSays:
             accuracy (int): The accuracy of the emotion analysis.
         """
         if accuracy < 50:
-            self.elmo.set_image("cry.png")
-            self.elmo.play_sound("bad_feedback.wav")
+            if (self.player != self.excluded_player and not self.feedback):
+                self.elmo.set_image("normal.png")
+                self.elmo.play_sound("normal_feedback.wav")
+            else:
+                self.elmo.set_image("cry.png")
+                self.elmo.play_sound("bad_feedback.wav")
         else:
             self.elmo.set_image("star.png")
             self.elmo.play_sound("good_feedback.wav")
@@ -460,12 +448,11 @@ class SimonSays:
             
             if (self.move == 0):
                 self.elmo.play_sound("first_emotion.wav")
-                time.sleep(5)
-            
             else:
                 self.play_transition()
-                time.sleep(5)
 
+            time.sleep(5)
+            
             player_move = self.get_player_move()
             self.emotion = self.shuffled_emotions[str(self.player)][player_move]
 
@@ -474,16 +461,13 @@ class SimonSays:
             self.elmo.play_sound(f"emotions/{self.emotion}.wav")
             self.elmo.set_image(f"emotions/{self.emotion}.png")
 
-            time.sleep(3)
+            time.sleep(2.5)
             
             # Take a picture and analyse emotion
             accuracy = self.analyse_emotion() 
             self.logger.log_message(f"Accuracy: {accuracy}")
             self.points[str(self.player)] += accuracy
-            print("accuracy: ", accuracy)
-            print(self.points)
-            self.logger.log_message(f"Player: {str(self.player)}, points: \
-                {self.points[str(self.player)]}")
+            self.logger.log_message(f"Player: {str(self.player)}, points: {self.points[str(self.player)]}")
 
             if self.feedback:
                 self.give_feedback(accuracy)
@@ -520,14 +504,14 @@ class SimonSays:
         self.first_player = random.randint(1, 2)
         
         self.logger.log_message(f"First player: {self.first_player}")
-        print("first player: ", self.first_player)
         
         if not self.feedback:
             self.excluded_player = random.randint(1, 2)
             self.logger.log_message(f"Excluded player: {self.excluded_player}")
-            print("excluded player: ", self.excluded_player)
             
         self.shuffle_emotions()
+        
+        time.sleep(0.5)
         
         while self.status == 1 and not self.restart_flag:
             self.logger.log_message("New emotion...")
@@ -543,7 +527,6 @@ class SimonSays:
 
             # Find winner
             winner = int(max(self.points, key=self.points.get))
-            print(winner)
             self.logger.log_message(self.points)
             self.logger.log_message(f"winner::{winner}")
             
@@ -573,11 +556,16 @@ class SimonSays:
         Restarts the game.
         """
         self.move = 0
-        self.player = 1
+        self.player = -1
+        self.first_player = -1
+        self.excluded_player = -1
         self.points = {"1": 0, "2": 0}
-        self.shuffled_emotions = {}
+        self.shuffled_emotions = {"1":[], "2":[]}
         self.status = 0
+        self.emotion = ""
         self.restart_flag = False
         self.remaining_transitions = transitions
+        
+        self.elmo.move_pan(0)
         self.elmo.set_image("normal.png")
         self.elmo.set_icon("black.png")
