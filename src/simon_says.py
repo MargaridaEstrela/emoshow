@@ -399,7 +399,7 @@ class SimonSays:
         
         time.sleep(1.5)
         self.elmo.set_icon("loading_4.gif") # Set loading icon
-        time.sleep(4)
+        time.sleep(2.5)
         self.elmo.set_icon("black.png") # After progress gif ended
         
         # DeepFace analysis
@@ -420,18 +420,18 @@ class SimonSays:
         Args:
             accuracy (int): The accuracy of the emotion analysis.
         """
-        if accuracy < 50:
-            if (self.player != self.excluded_player and not self.feedback):
-                self.elmo.set_image("normal.png")
-                self.elmo.play_sound("normal_feedback.wav")
-            else:
-                self.elmo.set_image("cry.png")
-                self.elmo.play_sound("bad_feedback.wav")
-        else:
+        if accuracy < 5:
+            self.elmo.set_image("cry.png")
+            self.elmo.play_sound("bad_feedback.wav")
+            time.sleep(5)
+        elif accuracy < 70 and accuracy >= 5:
+            self.elmo.set_image("blush.png")
+            self.elmo.play_sound("good_effort.wav")
+            time.sleep(4)
+        elif accuracy >= 70:
             self.elmo.set_image("star.png")
             self.elmo.play_sound("good_feedback.wav")
-
-        time.sleep(5)
+            time.sleep(5)
         
         self.elmo.set_image("normal.png") # Set default image 
 
@@ -451,7 +451,7 @@ class SimonSays:
             else:
                 self.play_transition()
 
-            time.sleep(5)
+            time.sleep(4.75)
             
             player_move = self.get_player_move()
             self.emotion = self.shuffled_emotions[str(self.player)][player_move]
@@ -461,7 +461,7 @@ class SimonSays:
             self.elmo.play_sound(f"emotions/{self.emotion}.wav")
             self.elmo.set_image(f"emotions/{self.emotion}.png")
 
-            time.sleep(2.5)
+            time.sleep(3)
             
             # Take a picture and analyse emotion
             accuracy = self.analyse_emotion() 
@@ -499,7 +499,7 @@ class SimonSays:
 
         time.sleep(2)
         
-        self.dynamic_intro()
+        #self.dynamic_intro()
 
         self.first_player = random.randint(1, 2)
         
@@ -564,6 +564,12 @@ class SimonSays:
         self.status = 0
         self.emotion = ""
         self.restart_flag = False
+        
+        transitions = ["alright", "checkpoint", "dont_blink", "feeling_inspired", 
+                "get_ready", "just_checking", "make_us_glad", "next_player_turn", 
+                "one_emotion_down", "say_cheese", "showtime", "next_challenge", 
+                "lets_go", "surprise_me"]
+        
         self.remaining_transitions = transitions
         
         self.elmo.move_pan(0)
