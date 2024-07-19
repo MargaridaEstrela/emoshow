@@ -5,21 +5,21 @@ import cv2
 import PySimpleGUI as sg
 
 from server import ElmoServer
-from simon_says import SimonSays
-from simon_says_logger import SimonSaysLogger
+from emoshow import EmoShow
+from emoshow_logger import EmoShowLogger
 
 elmo = None
 elmo_ip = None
 window = None
 logger = None
-simon_says = None
+emoshow = None
 debug_mode = False
 connect_mode = False
 
 
 def create_layout():
     """
-    Creates the layout for the Simon Says game interface.
+    Creates the layout for the Emo-Show game interface.
 
     Returns:
         list: The layout of the interface as a list of elements.
@@ -84,7 +84,7 @@ def create_layout():
         [sg.Text("", size=(1, 1))],
         [
             sg.Text("", size=(1, 1)),
-            sg.Text("Logs filename:"),
+            sg.Text("Log filename:"),
             sg.Input(key="-FILENAME-"),
             sg.Button("Ok", size=(5, 1)),
         ],
@@ -164,16 +164,16 @@ def handle_events():
     """
     event, values = window.read(timeout=1)
 
-    window["move"].update(simon_says.get_move())
-    window["emotion"].update(simon_says.get_emotion())
-    window["player1"].update(simon_says.get_points()["1"])
-    window["player2"].update(simon_says.get_points()["2"])
-    window["emotions1"].update(simon_says.get_shuffled_emotions()["1"])
-    window["emotions2"].update(simon_says.get_shuffled_emotions()["2"])
-    window["first"].update(simon_says.get_first_player())
-    window["excluded"].update(simon_says.get_excluded_player())
+    window["move"].update(emoshow.get_move())
+    window["emotion"].update(emoshow.get_emotion())
+    window["player1"].update(emoshow.get_points()["1"])
+    window["player2"].update(emoshow.get_points()["2"])
+    window["emotions1"].update(emoshow.get_shuffled_emotions()["1"])
+    window["emotions2"].update(emoshow.get_shuffled_emotions()["2"])
+    window["first"].update(emoshow.get_first_player())
+    window["excluded"].update(emoshow.get_excluded_player())
 
-    if not debug_mode:
+    if not debug_mode and not connect_mode:
         img = elmo.grab_image()
         img_bytes = cv2.imencode(".png", img)[1].tobytes()
         window["image"].update(data=img_bytes)
@@ -231,7 +231,7 @@ def handle_events():
         elmo.decrease_volume()
 
     if event == "Center Player":
-        simon_says.center_player()
+        emoshow.center_player()
 
     if event == "Default Screen":
         elmo.set_image("normal.png")
@@ -240,22 +240,22 @@ def handle_events():
         elmo.set_icon("elmo_idm.png")
 
     if event == "Feedback":
-        simon_says.toggle_feedback()
+        emoshow.toggle_feedback()
         # Change the color of the button
-        if simon_says.get_feedback():  # Feedback for both players
+        if emoshow.get_feedback():  # Feedback for both players
             window["Feedback"].update(button_color=("white", "green"))
         else:  # Player 2 doesn't receive feedback
             window["Feedback"].update(button_color=("white", "red"))
 
     if event == "Play":
-        simon_says.set_status(1)  # Playing games
-        if simon_says.game_thread is None or not simon_says.game_thread.is_alive():
-            simon_says.game_thread = threading.Thread(target=simon_says.play_game)
-            simon_says.game_thread.start()
+        emoshow.set_status(1)  # Playing games
+        if emoshow.game_thread is None or not emoshow.game_thread.is_alive():
+            emoshow.game_thread = threading.Thread(target=emoshow.play_game)
+            emoshow.game_thread.start()
 
     if event == "Restart":
-        simon_says.stop_game()
-        simon_says.restart_game()
+        emoshow.stop_game()
+        emoshow.restart_game()
 
     if (
         event == sg.WIN_CLOSED or event == "Close All"
@@ -268,12 +268,12 @@ def handle_events():
 
 def main():
     """
-    The main function of the Simon Says game interface.
+    The main function of the Emo-Show game interface.
 
     This function parses command line arguments, initializes the logger, starts the server,
     creates the game window, and enters the event loop to handle user interactions.
     """
-    global elmo, elmo_ip, window, simon_says, debug_mode, connect_mode, logger
+    global elmo, elmo_ip, window, emoshow, debug_mode, connect_mode, logger
 
     # Parse arguments
     if len(sys.argv) == 1:
@@ -296,7 +296,7 @@ def main():
         return
 
     # Start logger
-    logger = SimonSaysLogger()
+    logger = EmoShowLogger()
     logger.set_window(window)
 
     # Start server
@@ -304,18 +304,18 @@ def main():
         elmo_ip, int(elmo_port), client_ip, logger, debug_mode, connect_mode
     )
 
-    # Start Simon Says game
-    simon_says = SimonSays(elmo, logger)
+    # Start Emo-Show game
+    emoshow = EmoShow(elmo, logger)
 
     layout = create_layout()
 
     # Create window
-    title = "Simon Says"
+    title = "Emo-Show"
     if len(elmo_ip) > 0:
         title += "  " + "idmind@" + elmo_ip
     window = sg.Window(title, layout, finalize=True)
 
-    if not debug_mode:
+    if not debug_mode and not connect_mode:
         # Initial image update
         img = elmo.grab_image()
         img_bytes = cv2.imencode(".png", img)[1].tobytes()

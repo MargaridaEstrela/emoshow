@@ -1,0 +1,3 @@
+[submodule "src/ResidualMaskingNetwork"]
+	path = src/ResidualMaskingNetwork
+	url = git@github.com:phamquiluan/ResidualMaskingNetwork.git

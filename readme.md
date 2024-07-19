@@ -348,36 +348,3 @@ By calling **middleware** from the command line you can monitor several aspects 
 The bringup scripts are located inside the `scripts/folder`. A cronjob will launch them, edit by running the following command:
 
 ```$ crontab -e```
-
-## Simon Says Game
-
-This Python-based game integrates DeepFace for real-time emotion analysis and uses OpenCV to capture frames for expression analysis, providing an interactive experience for users.
-
-Here's how to get play:
-
-1. **Ensure Network Connection:** Connect your computer and the robot using an Ethernet cable.
-
-2. **Get IP Addresses:** Find the IP addresses of your computer and the robot.
-
-3. **Choose a Port:** Default port is 4000.
-
-4. **Execution:** We establish a connection between the robot and the computer using sockets, allowing us to send commands to the robot during the game.
-    - **On the Robot:** Run ```python3 src/simon_says_handler.py [ElmoIP] [ElmoPort]```
-
-       - This module parses all commands requested to the robot during the game. 
-
-    - **On Your Computer:** Launch the GUI with  ```python3 src/interface.py [ElmoIP] [ElmoPort] [YourIP]```
-        - `[ElmoIP]` -> the robot's IP address.
-        - `[ElmoPort]` -> the chosen port.
-        - `[YourIP]` -> your computer's IP address.
-        - To launch a debug session using sockets, add the `--connect` flag to the command. 
-        - To launch only the GUI, no arguments are needed (`python3 src/interface.py`).
-
-### Interface configuration 
-
-- Set a positive pan and tilt values.
-- Enable "Toggle Motors" and disable "Toggle Behaviour" 
-
-### User Study Demo
-
-Watch a demonstration of the user study [here](https://youtu.be/Z-tScwgMoMU). 
