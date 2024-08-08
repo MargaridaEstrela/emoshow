@@ -118,6 +118,7 @@ def main():
 
         if not debug:
             parse_message(data)
+            print(data)
 
 
 if __name__ == "__main__":

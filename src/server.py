@@ -204,10 +204,8 @@ class ElmoServer:
         self.logger.log_message(message)
 
         if self.debug == True:
-            # print("[DEBUG]: " + message)
             return "debug"
 
-        # print("Sending message: " + message)
         self.elmo_socket.sendto(message.encode("utf-8"), (self.elmo_ip, self.elmo_port))
 
     def send_request_command(self, command, **kwargs):

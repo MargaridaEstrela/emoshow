@@ -130,6 +130,11 @@ def create_layout():
             sg.Text("", size=(5, 1), key="excluded"),
         ],
         [sg.Text("", size=(1, 2))],
+        [
+            sg.Push(),
+            sg.Text("", size=(60, 1), key="results"),
+            sg.Push(),
+        ],
     ]
 
     layout = [
@@ -172,6 +177,7 @@ def handle_events():
     window["emotions2"].update(emoshow.get_shuffled_emotions()["2"])
     window["first"].update(emoshow.get_first_player())
     window["excluded"].update(emoshow.get_excluded_player())
+    window["results"].update(emoshow.get_results())
 
     if not debug_mode and not connect_mode:
         img = elmo.grab_image()
