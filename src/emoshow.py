@@ -96,7 +96,6 @@ class EmoShow:
         self.shuffled_emotions = {"1": [], "2": []}  # Shuffled emotions for each player
         self.status = 0  # 0: reset, 1: playing, 2: end game
         self.emotion = ""  # Current emotion
-        self.emotion_detected = ""  # Current emotion detected
         self.results = None  # Dict with the last results
         self.feedback = True  # Feedback mode
         self.remaining_transitions = TRANSITIONS.copy()  # Transitions between moves
@@ -224,10 +223,20 @@ class EmoShow:
 
     def shuffle_emotions(self):
         """
-        Shuffles the emotions for each player.
+        Shuffles the emotions for each player while minimizing similarity.
         """
-        self.shuffled_emotions["1"] = random.sample(EMOTIONS, len(EMOTIONS))
-        self.shuffled_emotions["2"] = random.sample(EMOTIONS, len(EMOTIONS))
+        emotions_1 = random.sample(EMOTIONS, len(EMOTIONS))  # Shuffle for player 1
+        
+        while True:
+            emotions_2 = random.sample(EMOTIONS, len(EMOTIONS))  # Shuffle for player 2
+            overlap_count = sum(1 for e1, e2 in zip(emotions_1, emotions_2) if e1 == e2)
+            
+            if overlap_count <= len(EMOTIONS) // 3:  # Allow only minimal overlap
+                break
+
+        self.shuffled_emotions["1"] = emotions_1
+        self.shuffled_emotions["2"] = emotions_2
+        
         self.logger.log_message(f"EMOTIONS 1: {self.shuffled_emotions['1']}")
         self.logger.log_message(f"EMOTIONS 2: {self.shuffled_emotions['2']}")
 
@@ -235,7 +244,6 @@ class EmoShow:
         """
         Plays the dynamics for the intro of the game.
         """
-        print("Dynamic intro")
         self.elmo.move_left()
         self.elmo.play_sound("introduction_1.wav")
         time.sleep(6.12)
@@ -275,7 +283,6 @@ class EmoShow:
         """
         Plays the dynamics for the conclusion of the game.
         """
-        print("Dynamic conclusion")
         self.elmo.move_pan(0)
         time.sleep(4)
 
@@ -299,19 +306,23 @@ class EmoShow:
         self.elmo.move_right()
         time.sleep(2)
         self.elmo.play_sound("joke_2.wav")
+        self.elmo.set_image("cookie-robot.png")
         time.sleep(4)
 
         self.elmo.move_left()
+        self.elmo.set_image("normal.png")
         time.sleep(2)
         self.elmo.play_sound("joke_3.wav")
         time.sleep(4)
         self.elmo.move_right()
         time.sleep(5)
         self.elmo.move_left()
+        self.elmo.set_image("coffee.png")
         time.sleep(5)
         self.elmo.move_pan(0)
         time.sleep(2)
         self.elmo.set_icon("black.png")  # Default icon
+        self.elmo.set_image("normal.png")  # Default image
 
     def center_player(self):
         """
@@ -335,22 +346,25 @@ class EmoShow:
         x, y, w, h = faces[0]
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-        # Calculate adjustments
-        horizontal_adjustment = (frame_center_x - (x + w / 2)) // 4
-        vertical_adjustment = (frame_center_y - (y + h / 2)) // 8
+        # Compute offsets
+        face_center_x = x + w / 2
+        face_center_y = y + h / 2
+        horizontal_offset = face_center_x - frame_center_x
+        vertical_offset = frame_center_y - face_center_y
 
-        # Get default pan and tilt angles
-        if self.player == 1:
-            default_pan = self.elmo.get_default_pan_left()
-            default_tilt = self.elmo.get_default_tilt_left()
-        else:
-            default_pan = self.elmo.get_default_pan_right()
-            default_tilt = self.elmo.get_default_tilt_right()
+        # Get current pan and tilt angles
+        current_pan_angle = self.elmo.get_current_pan_angle()
+        current_tilt_angle = self.elmo.get_current_tilt_angle()
 
-        new_pan_angle = default_pan + int(horizontal_adjustment / 3)
-        new_tilt_angle = default_tilt - int(vertical_adjustment / 3)
+        # Convert pixel offsets to angle corrections using camera FOV
+        horizontal_adjustment = (horizontal_offset / frame_width) * 62.2  # Use 62.2° FOV for pan
+        vertical_adjustment = (vertical_offset / frame_height) * 48.8  # Use 48.8° FOV for tilt
 
-        # Check if values are within bounds
+        # Apply angle corrections and update default values
+        new_pan_angle = round(current_pan_angle - horizontal_adjustment)
+        new_tilt_angle = round(current_tilt_angle - vertical_adjustment)
+
+        # Check if values are within valid range
         new_pan_angle = self.elmo.check_pan_angle(new_pan_angle)
         new_tilt_angle = self.elmo.check_tilt_angle(new_tilt_angle)
 
@@ -367,16 +381,16 @@ class EmoShow:
         self.elmo.move_tilt(new_tilt_angle)
 
         # Save changes
-        self.logger.log_message(
-            f"Horizontal adjustment: {int(horizontal_adjustment/3)}"
-        )
-        self.logger.log_message(f"Vertical adjustment: {int(vertical_adjustment/3)}")
+        self.logger.log_message(f"Face center: ({face_center_x}, {face_center_y})")
+        self.logger.log_message(f"Horizontal offset: {horizontal_offset}, Adjusted pan: {horizontal_adjustment}")
+        self.logger.log_message(f"Vertical offset: {vertical_offset}, Adjusted tilt: {vertical_adjustment}")
+        self.logger.log_message(f"New pan angle: {new_pan_angle}, Current pan angle: {current_pan_angle}")
+        self.logger.log_message(f"New tilt angle: {new_tilt_angle}, Current tilt angle: {current_tilt_angle}")
 
     def change_player(self):
         """
         Changes the current player.
         """
-        print("Changing player")
         if self.first_player == 1:
             self.player = 1 if self.move % 2 == 0 else 2
         else:
@@ -443,9 +457,10 @@ class EmoShow:
         time.sleep(2.5)
         self.elmo.set_icon("black.png")  # After progress gif ended
 
-        # DeepFace analysis
+        # Emotion Expression Analysis
         try:
             results = m.detect_emotion_for_single_frame(frame)
+            self.logger.log_message(results)
             proba_list = results[0]["proba_list"]
             self.results = (
                 f'Angry: {round(proba_list[0]["angry"] * 100)}  '
@@ -460,24 +475,13 @@ class EmoShow:
             accuracy = round(
                 proba_list[emotions_dict[self.emotion]][self.emotion] * 100
             )
-
-            # Detected Emotion
-            self.emotion_detected = results[0]["emo_label"]
-
-            if self.emotion != self.emotion_detected:
-                detected_accuracy = round(results[0]["emo_proba"] * 100)
-                self.logger.log_error(
-                    f"{self.emotion}: {accuracy}% -> {self.emotion_detected}: {detected_accuracy}%"
-                )
-            else:
-                self.logger.log_message(f"{self.emotion}: {accuracy}%")
+            self.logger.log_message(f"{self.emotion}: {accuracy}%")
 
         except Exception as e:
             self.logger.log_error(e)
             accuracy = 0
-            self.emotion_detected = None
             self.results = None
-            self.logger.log_error("accuracy: 0%")
+            self.logger.log_error("Accuracy: 0%")
 
         return accuracy
 
@@ -488,34 +492,12 @@ class EmoShow:
         Args:
             accuracy (int): The probability of the detected emotion.
         """
-        if self.results:
-            if self.player != self.excluded_player:
-                if accuracy < 5:  # with no cry sound and cry face
-                    feedback = (
-                        "normal.png",
-                        f"bad_{self.emotion}.wav",
-                        6,
-                    )
-                elif accuracy < 70:
-                    feedback = ("blush.png", "good_effort.wav", 4)
-                else:
-                    feedback = ("star.png", "good_feedback.wav", 5)
-            else:
-                if self.emotion_detected != self.emotion:  # with negative feedback
-                    feedback = (
-                        "cry.png",
-                        f"emotions_detected/{self.emotion}_detected.wav",
-                        6,
-                    )
-                elif accuracy < 70:
-                    feedback = ("blush.png", "good_effort.wav", 4)
-                else:
-                    feedback = ("star.png", "good_feedback.wav", 5)
-        else:
-            if self.player != self.excluded_player:
-                feedback = ("normal.png", f"bad_{self.emotion}.wav", 6)
-            else:
-                feedback = ("cry.png", f"no_detection/bad_{self.emotion}.wav", 6)
+        if accuracy < 5: # I couldn't identify {emotion}. Keep trying, you can do it!
+            feedback = ("cry.png", f"bad_{self.emotion}.wav", 6)
+        elif accuracy < 70: # Good effort!
+            feedback = ("blush.png", "good_effort.wav", 4)
+        else: # Cheerful success chime
+            feedback = ("star.png", "good_feedback.wav", 5)
 
         self.elmo.set_image(f"{feedback[0]}")
         self.elmo.play_sound(f"{feedback[1]}")
@@ -536,12 +518,11 @@ class EmoShow:
                 self.elmo.move_right()
         else:
             if self.excluded_player == 1:
-                print("winner: right player")
                 self.elmo.move_right()
             else:
-                print("Winner: left player")
                 self.elmo.move_left()
 
+        self.elmo.set_image("normal.png")
         time.sleep(2)
         self.elmo.play_sound("winner.wav")  # Congrats winner
         time.sleep(6.3)
@@ -556,8 +537,6 @@ class EmoShow:
             self.status = 2  # Game Over
         else:
             self.change_player()
-            print(f"Player: {self.player}")
-            print(f"Move: {self.move}")
 
             if self.move == 0:
                 self.elmo.play_sound("first_emotion.wav")
@@ -570,7 +549,6 @@ class EmoShow:
             self.emotion = self.shuffled_emotions[str(self.player)][player_move]
 
             # Say emotion
-            print("Emotion upcoming...")
             self.logger.log_message(f"Emotion: {self.emotion}")
             self.elmo.play_sound(f"emotions/{self.emotion}.wav")
             self.elmo.set_image(f"emotions/{self.emotion}.png")
@@ -594,8 +572,8 @@ class EmoShow:
                     self.excluded_player != self.first_player and self.move == 3
                 ):
                     self.give_feedback(accuracy)
-            else:
-                print("Skip feedback")
+                else:
+                    time.sleep(1)
 
             self.move += 1
 
@@ -619,9 +597,6 @@ class EmoShow:
             self.excluded_player = random.randint(1, 2)
             self.logger.log_message(f"Excluded player: {self.excluded_player}")
 
-        print(f"First player: {self.first_player}")
-        print(f"Excluded player: {self.excluded_player}")
-
         self.shuffle_emotions()
 
         time.sleep(0.5)
@@ -631,12 +606,12 @@ class EmoShow:
             self.player_move()
 
         if self.status == 2:
-            self.elmo.set_image("normal.png")
+            self.elmo.set_image("end_game.png")
             self.elmo.move_pan(0)  # Look in the middle
             self.elmo.set_icon("fireworks.gif")
             self.elmo.play_sound("end_game_song.wav")
 
-            time.sleep(2)
+            time.sleep(4.5)
 
             self.congrats_winner()
 
@@ -667,23 +642,7 @@ class EmoShow:
         self.restart_flag = False
         self.results = None
 
-        transitions = [
-            "alright",
-            "checkpoint",
-            "dont_blink",
-            "feeling_inspired",
-            "get_ready",
-            "just_checking",
-            "make_us_glad",
-            "next_player_turn",
-            "one_emotion_down",
-            "say_cheese",
-            "showtime",
-            "next_challenge",
-            "lets_go",
-        ]
-
-        self.remaining_transitions = transitions
+        self.remaining_transitions = TRANSITIONS.copy()
 
         self.elmo.move_pan(0)
         self.elmo.set_image("normal.png")

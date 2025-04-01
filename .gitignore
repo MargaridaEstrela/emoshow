@@ -173,3 +173,8 @@ cython_debug/
 */frames
 */logs
 /demos
+
+# Models
+res10_300x300_ssd_iter_140000.caffemodel
+pretrained_ckpt
+deploy.prototxt.txt

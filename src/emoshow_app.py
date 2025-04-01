@@ -2,9 +2,9 @@ import sys
 import threading
 
 import cv2
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 
-from server import ElmoServer
+from elmo_server import ElmoServer
 from emoshow import EmoShow
 from emoshow_logger import EmoShowLogger
 
@@ -155,6 +155,18 @@ def create_layout():
 
     return layout
 
+def set_pan(value):
+    elmo.move_pan(value)
+    default_pan = int(value)
+    elmo.set_default_pan_left(-default_pan)
+    elmo.set_default_pan_right(default_pan)
+    
+def set_tilt(value):
+    elmo.move_tilt(value)
+    default_tilt = int(value)
+    elmo.set_default_tilt_left(default_tilt)
+    elmo.set_default_tilt_right(default_tilt)
+
 
 def handle_events():
     """
@@ -205,19 +217,11 @@ def handle_events():
 
     if event == "SetPan":
         value = values["pan_value"]
-        if value:
-            elmo.move_pan(value)
-            default_pan = int(value)
-            elmo.set_default_pan_left(-default_pan)
-            elmo.set_default_pan_right(default_pan)
+        if value: set_pan(value)
 
     if event == "SetTilt":
         value = values["tilt_value"]
-        if value:
-            elmo.move_tilt(value)
-            default_tilt = int(value)
-            elmo.set_default_tilt_left(default_tilt)
-            elmo.set_default_tilt_right(default_tilt)
+        if value: set_tilt(value)
 
     if event == "Toggle Blush":
         elmo.toggle_blush()
@@ -254,6 +258,9 @@ def handle_events():
             window["Feedback"].update(button_color=("white", "red"))
 
     if event == "Play":
+        set_pan(35)
+        set_tilt(-3)
+        elmo.set_volume(40)
         emoshow.set_status(1)  # Playing games
         if emoshow.game_thread is None or not emoshow.game_thread.is_alive():
             emoshow.game_thread = threading.Thread(target=emoshow.play_game)
@@ -262,6 +269,7 @@ def handle_events():
     if event == "Restart":
         emoshow.stop_game()
         emoshow.restart_game()
+        window["results"].update("")
 
     if (
         event == sg.WIN_CLOSED or event == "Close All"
@@ -298,7 +306,7 @@ def main():
             connect_mode = True
 
     else:
-        print("Usage: python3 interface.py <elmo_ip> <elmo_port> <client_ip>")
+        print("Usage: python3 emoshow_app.py <elmo_ip> <elmo_port> <my_ip>")
         return
 
     # Start logger

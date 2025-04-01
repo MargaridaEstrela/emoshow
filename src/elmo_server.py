@@ -19,6 +19,8 @@ class ElmoServer:
                                     connect mode. Defaults to False.
 
     Methods:
+        set_pan(int): Sets the pan angle
+        set_tilt(int): Sets the tilt angle
         set_default_pan_left(default_pan): Set the default left pan angle
         set_default_pan_right(default_pan): Set the default right pan angle
         set_default_tilt_left(default_tilt): Set the default left tilt angle
@@ -27,6 +29,8 @@ class ElmoServer:
         get_default_pan_right(): Get the default right pan angle
         get_default_tilt_left(): Get the default left tilt angle
         get_default_tilt_right(): Get the default right tilt angle
+        get_current_tilt_angle(): Get the current tilt angle
+        get_current_pan_angle(): Get the current pan angle
         get_control_motors(): Get the status of the motor control
         get_control_behaviour(): Get the status of the behaviour control
         get_control_blush(): Get the status of the behaviour blush
@@ -43,6 +47,7 @@ class ElmoServer:
         move_tilt(angle): Tilt move with a specific angle
         move_left(): Move to the left
         move_right(): Move to the right
+        set_volume(volume): Set the volume
         increase_volume(): Send message to increase the volume
         decrease_volume(): Send message to decrease the volume
         grab_image(): Capture an image
@@ -68,6 +73,9 @@ class ElmoServer:
         self.default_pan_right = 0
         self.default_tilt_left = 0
         self.default_tilt_right = 0
+        
+        self.current_pan = 0
+        self.current_tilt = 0
 
         self.send_request_command("enable_behaviour", name="look_around", control=False)
         self.send_request_command("enable_behaviour", name="blush", control=False)
@@ -87,6 +95,8 @@ class ElmoServer:
 
         self.set_image("normal.png")
         self.set_icon("black.png")
+        self.move_pan(0)
+        self.move_tilt(0)
 
     def set_default_pan_left(self, pan_angle):
         """
@@ -186,6 +196,24 @@ class ElmoServer:
             bool: The control blush object.
         """
         return self.control_blush
+    
+    def get_current_tilt_angle(self):
+        """
+        Returns the current tilt angle.
+
+        Returns:
+            int: The current tilt angle.
+        """
+        return self.current_tilt
+    
+    def get_current_pan_angle(self):
+        """
+        Returns the current pan angle.
+
+        Returns:
+            int: The current pan angle.
+        """
+        return self.current_pan
 
     def connect_elmo(self):
         """
@@ -291,6 +319,7 @@ class ElmoServer:
         Args:
             angle (int): The angle to move the pan.
         """
+        self.current_pan = angle
         self.send_message(f"pan::{angle}")
 
     def move_tilt(self, angle):
@@ -300,6 +329,7 @@ class ElmoServer:
         Args:
             angle (int): The angle to move the tilt.
         """
+        self.current_tilt = angle
         self.send_message(f"tilt::{angle}")
 
     def move_left(self):
@@ -309,6 +339,9 @@ class ElmoServer:
         This method adjusts the pan value to move the device to the left.
         The tilt value remains unchanged.
         """
+        self.current_pan = self.default_pan_left
+        self.current_tilt = self.default_tilt_left
+        
         self.send_message(f"pan::{self.default_pan_left}")
         self.send_message(f"tilt::{self.default_tilt_left}")
 
@@ -319,6 +352,9 @@ class ElmoServer:
         This method adjusts the pan value to move the device to the right.
         The tilt value remains unchanged.
         """
+        self.current_pan = self.default_pan_right
+        self.current_tilt = self.default_tilt_right
+        
         self.send_message(f"pan::{self.default_pan_right}")
         self.send_message(f"tilt::{self.default_tilt_right}")
 
@@ -333,6 +369,12 @@ class ElmoServer:
         Sends a message to decrease the volume.
         """
         self.send_message("speakers::decreaseVolume")
+    
+    def set_volume(self, volume):
+        """
+        Sends a message to set the volume.
+        """
+        self.send_message(f"speakers::{volume}")
 
     def grab_image(self):
         """

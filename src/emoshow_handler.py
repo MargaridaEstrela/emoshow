@@ -38,6 +38,7 @@ def parse_message(message):
 
     if len(splitMessage) != 2:
         print("Invalid message")
+        return
 
     command = splitMessage[0]
     value = splitMessage[1]
@@ -91,7 +92,7 @@ def main():
         elmo_ip, elmo_port = sys.argv[1:3]
         debug = False
     else:
-        print("Usage: python3 emoshow_handler.py <elmoIp> <port> (--debug)")
+        print("Usage: python emoshow_handler.py <elmoIp> <port> (--debug)")
         return
 
     # Check debug flag
@@ -99,7 +100,7 @@ def main():
         if sys.argv[3] == "--debug":
             debug = True
         else:
-            print("Usage: python3 emoshow.py <elmoIp> <port> (--debug)")
+            print("Usage: python emoshow_handler.py <elmoIp> <port> (--debug)")
             return
 
     print("Starting connection...")
@@ -118,7 +119,6 @@ def main():
 
         if not debug:
             parse_message(data)
-            print(data)
 
 
 if __name__ == "__main__":
